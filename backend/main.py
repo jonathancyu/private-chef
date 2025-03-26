@@ -893,6 +893,39 @@ def record_eaten_meal(
     return db_eaten_meal
 
 
+# Define Pydantic models for meal information
+class MealInfo(BaseModel):
+    """Model for individual meal information"""
+
+    type: str
+    name: str
+    servings: float
+    calories: int
+    protein: float
+    carbs: float
+    fat: float
+
+
+class MealsByType(BaseModel):
+    """Model for meals organized by meal type"""
+
+    breakfast: List[MealInfo] = Field(default_factory=list)
+    lunch: List[MealInfo] = Field(default_factory=list)
+    dinner: List[MealInfo] = Field(default_factory=list)
+    snack: List[MealInfo] = Field(default_factory=list)
+
+
+class MacrosSummary(BaseModel):
+    """Model for daily macros summary"""
+
+    date: date
+    calories: int
+    protein: float
+    carbs: float
+    fat: float
+    meals: MealsByType
+
+
 @app.get("/macros/daily/", response_model=MacrosSummary)
 def get_daily_macros(
     day: date = Query(..., description="Date to get macros for"),
@@ -918,19 +951,17 @@ def get_daily_macros(
         .all()
     )
 
-    # Initialize result
-    result = {
-        "date": day,
-        "calories": 0,
-        "protein": 0.0,
-        "carbs": 0.0,
-        "fat": 0.0,
-        "meals": {"breakfast": [], "lunch": [], "dinner": [], "snack": []},
-    }
+    # Initialize result with Pydantic models
+    meals_by_type = MealsByType()
+    total_calories = 0
+    total_protein = 0.0
+    total_carbs = 0.0
+    total_fat = 0.0
 
     # Calculate macros for each meal
     for eaten_meal in eaten_meals:
-        meal_info = {"servings": eaten_meal.servings}
+        meal_type = ""
+        meal_name = ""
         calories = 0
         protein = 0.0
         carbs = 0.0
@@ -950,8 +981,8 @@ def get_daily_macros(
             carbs = recipe.carbs_per_serving * eaten_meal.servings
             fat = recipe.fat_per_serving * eaten_meal.servings
 
-            meal_info["type"] = "cooked_meal"
-            meal_info["name"] = recipe.name
+            meal_type = "cooked_meal"
+            meal_name = recipe.name
 
         # Snack
         elif eaten_meal.snack_id:
@@ -962,8 +993,8 @@ def get_daily_macros(
             carbs = snack.carbs_per_serving * eaten_meal.servings
             fat = snack.fat_per_serving * eaten_meal.servings
 
-            meal_info["type"] = "snack"
-            meal_info["name"] = snack.name
+            meal_type = "snack"
+            meal_name = snack.name
 
         # Eaten out
         elif eaten_meal.eaten_out_id:
@@ -980,25 +1011,45 @@ def get_daily_macros(
             carbs = eaten_out.carbs * proportion
             fat = eaten_out.fat * proportion
 
-            meal_info["type"] = "eaten_out"
-            meal_info["name"] = f"{eaten_out.restaurant} - {eaten_out.meal_name}"
+            meal_type = "eaten_out"
+            meal_name = f"{eaten_out.restaurant} - {eaten_out.meal_name}"
 
-        # Add macros to meal info
-        meal_info["calories"] = calories
-        meal_info["protein"] = protein
-        meal_info["carbs"] = carbs
-        meal_info["fat"] = fat
+        # Create meal info object
+        meal_info = MealInfo(
+            type=meal_type,
+            name=meal_name,
+            servings=eaten_meal.servings,
+            calories=int(calories),
+            protein=protein,
+            carbs=carbs,
+            fat=fat,
+        )
 
         # Add to appropriate meal type
-        result["meals"][eaten_meal.meal_type].append(meal_info)
+        if eaten_meal.meal_type == MealType.BREAKFAST:
+            meals_by_type.breakfast.append(meal_info)
+        elif eaten_meal.meal_type == MealType.LUNCH:
+            meals_by_type.lunch.append(meal_info)
+        elif eaten_meal.meal_type == MealType.DINNER:
+            meals_by_type.dinner.append(meal_info)
+        elif eaten_meal.meal_type == MealType.SNACK:
+            meals_by_type.snack.append(meal_info)
 
         # Update totals
-        result["calories"] += calories
-        result["protein"] += protein
-        result["carbs"] += carbs
-        result["fat"] += fat
+        total_calories += calories
+        total_protein += protein
+        total_carbs += carbs
+        total_fat += fat
 
-    return MacrosSummary(**result)
+    # Create and return the MacrosSummary object
+    return MacrosSummary(
+        date=day,
+        calories=int(total_calories),
+        protein=total_protein,
+        carbs=total_carbs,
+        fat=total_fat,
+        meals=meals_by_type,
+    )
 
 
 if __name__ == "__main__":
