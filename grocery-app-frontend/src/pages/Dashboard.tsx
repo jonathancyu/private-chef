@@ -43,28 +43,28 @@ const Dashboard: React.FC = () => {
                   CALORIES
                 </div>
                 <div className="text-2xl font-bold">
-                  {todayMacros.total_calories}
+                  {todayMacros.calories}
                 </div>
               </div>
 
               <div className="bg-blue-50 p-4 rounded">
                 <div className="text-xs text-blue-600 font-medium">PROTEIN</div>
                 <div className="text-2xl font-bold">
-                  {todayMacros.total_protein.toFixed(1)}g
+                  {todayMacros.protein.toFixed(1)}g
                 </div>
               </div>
 
               <div className="bg-green-50 p-4 rounded">
                 <div className="text-xs text-green-600 font-medium">CARBS</div>
                 <div className="text-2xl font-bold">
-                  {todayMacros.total_carbs.toFixed(1)}g
+                  {todayMacros.carbs.toFixed(1)}g
                 </div>
               </div>
 
               <div className="bg-yellow-50 p-4 rounded">
                 <div className="text-xs text-yellow-600 font-medium">FAT</div>
                 <div className="text-2xl font-bold">
-                  {todayMacros.total_fat.toFixed(1)}g
+                  {todayMacros.fat.toFixed(1)}g
                 </div>
               </div>
             </div>

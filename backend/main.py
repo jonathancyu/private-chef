@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import (
     create_engine,
     Column,
@@ -56,14 +57,14 @@ class Recipe(Base):
 
     __tablename__ = "recipes"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    name: Column[str] = Column(String, index=True)
-    servings: Column[float] = Column(Float)
-    calories_per_serving: Column[int] = Column(Integer)
-    protein_per_serving: Column[float] = Column(Float)
-    carbs_per_serving: Column[float] = Column(Float)
-    fat_per_serving: Column[float] = Column(Float)
-    instructions: Column[str] = Column(Text)
+    id: int = Column(Integer, primary_key=True, index=True)
+    name: str = Column(String, index=True)
+    servings: float = Column(Float)
+    calories_per_serving: int = Column(Integer)
+    protein_per_serving: float = Column(Float)
+    carbs_per_serving: float = Column(Float)
+    fat_per_serving: float = Column(Float)
+    instructions: str = Column(Text)
 
     ingredients = relationship("RecipeIngredient", back_populates="recipe")
     planned_meals = relationship("PlannedMeal", back_populates="recipe")
@@ -75,13 +76,13 @@ class Ingredient(Base):
 
     __tablename__ = "ingredients"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    name: Column[str] = Column(String, index=True)
-    calories_per_unit: Column[int] = Column(Integer)
-    protein_per_unit: Column[float] = Column(Float)
-    carbs_per_unit: Column[float] = Column(Float)
-    fat_per_unit: Column[float] = Column(Float)
-    unit: Column[str] = Column(String)  # e.g., grams, ml, pieces
+    id: int = Column(Integer, primary_key=True, index=True)
+    name: str = Column(String, index=True)
+    calories_per_unit: int = Column(Integer)
+    protein_per_unit: float = Column(Float)
+    carbs_per_unit: float = Column(Float)
+    fat_per_unit: float = Column(Float)
+    unit: str = Column(String)  # e.g., grams, ml, pieces
 
     recipe_ingredients = relationship("RecipeIngredient", back_populates="ingredient")
     inventory = relationship("Inventory", back_populates="ingredient")
@@ -92,10 +93,10 @@ class RecipeIngredient(Base):
 
     __tablename__ = "recipe_ingredients"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    recipe_id: Column[int] = Column(Integer, ForeignKey("recipes.id"))
-    ingredient_id: Column[int] = Column(Integer, ForeignKey("ingredients.id"))
-    amount: Column[float] = Column(Float)
+    id: int = Column(Integer, primary_key=True, index=True)
+    recipe_id: int = Column(Integer, ForeignKey("recipes.id"))
+    ingredient_id: int = Column(Integer, ForeignKey("ingredients.id"))
+    amount: float = Column(Float)
 
     recipe = relationship("Recipe", back_populates="ingredients")
     ingredient = relationship("Ingredient", back_populates="recipe_ingredients")
@@ -106,13 +107,13 @@ class Snack(Base):
 
     __tablename__ = "snacks"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    name: Column[str] = Column(String, index=True)
-    servings: Column[float] = Column(Float)
-    calories_per_serving: Column[int] = Column(Integer)
-    protein_per_serving: Column[float] = Column(Float)
-    carbs_per_serving: Column[float] = Column(Float)
-    fat_per_serving: Column[float] = Column(Float)
+    id: int = Column(Integer, primary_key=True, index=True)
+    name: str = Column(String, index=True)
+    servings: float = Column(Float)
+    calories_per_serving: int = Column(Integer)
+    protein_per_serving: float = Column(Float)
+    carbs_per_serving: float = Column(Float)
+    fat_per_serving: float = Column(Float)
 
     planned_meals = relationship("PlannedMeal", back_populates="snack")
     eaten_meals = relationship("EatenMeal", back_populates="snack")
@@ -123,16 +124,12 @@ class PlannedMeal(Base):
 
     __tablename__ = "planned_meals"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    date: Column[date] = Column(Date)
-    meal_type: Column[str] = Column(String)  # breakfast, lunch, dinner, snack
-    recipe_id: Column[Optional][int] = Column(
-        Integer, ForeignKey("recipes.id"), nullable=True
-    )
-    snack_id: Column[Optional][int] = Column(
-        Integer, ForeignKey("snacks.id"), nullable=True
-    )
-    servings: Column[float] = Column(Float)
+    id: int = Column(Integer, primary_key=True, index=True)
+    date: date = Column(Date)
+    meal_type: str = Column(String)  # breakfast, lunch, dinner, snack
+    recipe_id: Optional[int] = Column(Integer, ForeignKey("recipes.id"), nullable=True)
+    snack_id: Optional[int] = Column(Integer, ForeignKey("snacks.id"), nullable=True)
+    servings: float = Column(Float)
 
     recipe = relationship("Recipe", back_populates="planned_meals")
     snack = relationship("Snack", back_populates="planned_meals")
@@ -143,10 +140,10 @@ class Inventory(Base):
 
     __tablename__ = "inventory"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    ingredient_id: Column[int] = Column(Integer, ForeignKey("ingredients.id"))
-    amount: Column[float] = Column(Float)
-    purchase_date: Column[date] = Column(Date)
+    id: int = Column(Integer, primary_key=True, index=True)
+    ingredient_id: int = Column(Integer, ForeignKey("ingredients.id"))
+    amount: float = Column(Float)
+    purchase_date: date = Column(Date)
 
     ingredient = relationship("Ingredient", back_populates="inventory")
 
@@ -156,10 +153,10 @@ class CookedMeal(Base):
 
     __tablename__ = "cooked_meals"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    recipe_id: Column[int] = Column(Integer, ForeignKey("recipes.id"))
-    date_cooked: Column[datetime] = Column(DateTime, default=datetime.utcnow)
-    servings_remaining: Column[float] = Column(Float)
+    id: int = Column(Integer, primary_key=True, index=True)
+    recipe_id: int = Column(Integer, ForeignKey("recipes.id"))
+    date_cooked: datetime = Column(DateTime, default=datetime.utcnow)
+    servings_remaining: float = Column(Float)
 
     recipe = relationship("Recipe", back_populates="cooked_meals")
     eaten_meals = relationship("EatenMeal", back_populates="cooked_meal")
@@ -170,16 +167,16 @@ class EatenOut(Base):
 
     __tablename__ = "eaten_out"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    restaurant: Column[str] = Column(String)
-    meal_name: Column[str] = Column(String)
-    calories: Column[int] = Column(Integer)
-    protein: Column[float] = Column(Float)
-    carbs: Column[float] = Column(Float)
-    fat: Column[float] = Column(Float)
-    date: Column[datetime] = Column(DateTime, default=datetime.utcnow)
-    servings_total: Column[float] = Column(Float, default=1.0)
-    servings_remaining: Column[float] = Column(Float, default=0.0)
+    id: int = Column(Integer, primary_key=True, index=True)
+    restaurant: str = Column(String)
+    meal_name: str = Column(String)
+    calories: int = Column(Integer)
+    protein: float = Column(Float)
+    carbs: float = Column(Float)
+    fat: float = Column(Float)
+    date: datetime = Column(DateTime, default=datetime.utcnow)
+    servings_total: float = Column(Float, default=1.0)
+    servings_remaining: float = Column(Float, default=0.0)
 
     eaten_meals = relationship("EatenMeal", back_populates="eaten_out")
 
@@ -189,17 +186,17 @@ class EatenMeal(Base):
 
     __tablename__ = "eaten_meals"
 
-    id: Column[int] = Column(Integer, primary_key=True, index=True)
-    date: Column[datetime] = Column(DateTime, default=datetime.utcnow)
-    meal_type: Column[str] = Column(String)  # breakfast, lunch, dinner, snack
-    cooked_meal_id: Column[int] = Column(
+    id: int = Column(Integer, primary_key=True, index=True)
+    date: datetime = Column(DateTime, default=datetime.utcnow)
+    meal_type: str = Column(String)  # breakfast, lunch, dinner, snack
+    cooked_meal_id: Optional[int] = Column(
         Integer, ForeignKey("cooked_meals.id"), nullable=True
     )
     snack_id: Optional[int] = Column(Integer, ForeignKey("snacks.id"), nullable=True)
     eaten_out_id: Optional[int] = Column(
         Integer, ForeignKey("eaten_out.id"), nullable=True
     )
-    servings: Column[float] = Column(Float)
+    servings: float = Column(Float)
 
     cooked_meal = relationship("CookedMeal", back_populates="eaten_meals")
     snack = relationship("Snack", back_populates="eaten_meals")
@@ -455,6 +452,14 @@ class MacrosSummary(BaseModel):
 
 # FastAPI application
 app = FastAPI(title="Grocery, Meal Planning, and Calorie Tracking API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Ingredient endpoints

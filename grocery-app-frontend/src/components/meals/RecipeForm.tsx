@@ -74,7 +74,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
           ingredient_id,
           amount,
         })),
-      };
+      } as Recipe;
 
       const createdRecipe = await createRecipe(recipeData);
       onRecipeCreated(createdRecipe);

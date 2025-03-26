@@ -133,10 +133,10 @@ const DailyMacros: React.FC = () => {
         <div>
           <MacrosCard
             title="Daily Totals"
-            calories={macros.total_calories}
-            protein={macros.total_protein}
-            carbs={macros.total_carbs}
-            fat={macros.total_fat}
+            calories={macros.calories}
+            protein={macros.protein}
+            carbs={macros.carbs}
+            fat={macros.fat}
           />
 
           <MealDetail title="Breakfast" items={macros.meals.breakfast} />
