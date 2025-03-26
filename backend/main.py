@@ -443,10 +443,10 @@ class MacrosSummary(BaseModel):
     """Model for daily macros summary"""
 
     date: date
-    total_calories: int
-    total_protein: float
-    total_carbs: float
-    total_fat: float
+    calories: int
+    protein: float
+    carbs: float
+    fat: float
     meals: Dict[str, List[Dict[str, Any]]]
 
 
@@ -921,10 +921,10 @@ def get_daily_macros(
     # Initialize result
     result = {
         "date": day,
-        "total_calories": 0,
-        "total_protein": 0.0,
-        "total_carbs": 0.0,
-        "total_fat": 0.0,
+        "calories": 0,
+        "protein": 0.0,
+        "carbs": 0.0,
+        "fat": 0.0,
         "meals": {"breakfast": [], "lunch": [], "dinner": [], "snack": []},
     }
 
@@ -993,10 +993,10 @@ def get_daily_macros(
         result["meals"][eaten_meal.meal_type].append(meal_info)
 
         # Update totals
-        result["total_calories"] += calories
-        result["total_protein"] += protein
-        result["total_carbs"] += carbs
-        result["total_fat"] += fat
+        result["calories"] += calories
+        result["protein"] += protein
+        result["carbs"] += carbs
+        result["fat"] += fat
 
     return MacrosSummary(**result)
 
