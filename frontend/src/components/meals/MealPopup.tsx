@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 interface MealPopupProps {
   recipeName: string;
@@ -17,25 +17,14 @@ const MealPopup: React.FC<MealPopupProps> = ({
 }) => {
   const [servings, setServings] = useState(currentServings);
   const popupRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose]);
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-10 lex items-center justify-center z-50">
-      <div ref={popupRef} className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+    <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50">
+      <div
+        ref={popupRef}
+        className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl"
+      >
         <h3 className="text-lg font-semibold mb-4">{recipeName}</h3>
-        
+
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Servings
@@ -79,4 +68,5 @@ const MealPopup: React.FC<MealPopupProps> = ({
   );
 };
 
-export default MealPopup; 
+export default MealPopup;
+
