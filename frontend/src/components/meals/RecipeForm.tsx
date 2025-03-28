@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient, RecipeIngredient } from "../../types/api.types";
 import { getIngredients, createRecipe } from "../../services/api";
+import IngredientPopup from "./IngredientPopup";
 
 interface RecipeFormProps {
   onRecipeCreated: (recipe: Recipe) => void;
@@ -18,6 +19,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
   const [availableIngredients, setAvailableIngredients] = useState<
     Ingredient[]
   >([]);
+  const [showIngredientPopup, setShowIngredientPopup] = useState(false);
 
   useEffect(() => {
     const loadIngredients = async () => {
@@ -32,13 +34,12 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
     loadIngredients();
   }, []);
 
-  const addIngredient = () => {
-    if (availableIngredients.length > 0) {
-      setIngredients([
-        ...ingredients,
-        { id: 0, ingredient_id: availableIngredients[0].id, amount: 1 },
-      ]);
-    }
+  const handleIngredientSelected = (ingredientId: number) => {
+    setIngredients([
+      ...ingredients,
+      { id: 0, ingredient_id: ingredientId, amount: 1 },
+    ]);
+    setShowIngredientPopup(false);
   };
 
   const updateIngredient = (
@@ -56,6 +57,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const getIngredientDetails = (ingredientId: number): Ingredient | undefined => {
+    return availableIngredients.find((ing) => ing.id === ingredientId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -191,7 +196,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
             <label className="block text-gray-700">Ingredients</label>
             <button
               type="button"
-              onClick={addIngredient}
+              onClick={() => setShowIngredientPopup(true)}
               className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm"
             >
               + Add Ingredient
@@ -202,47 +207,37 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
             <p className="text-gray-500 text-sm italic">No ingredients added</p>
           )}
 
-          {ingredients.map((ingredient, index) => (
-            <div key={index} className="flex items-center space-x-2 mb-2">
-              <select
-                value={ingredient.ingredient_id}
-                onChange={(e) =>
-                  updateIngredient(
-                    index,
-                    "ingredient_id",
-                    Number(e.target.value),
-                  )
-                }
-                className="flex-1 p-2 border rounded"
-              >
-                {availableIngredients.map((availableIngredient) => (
-                  <option
-                    key={availableIngredient.id}
-                    value={availableIngredient.id}
-                  >
-                    {availableIngredient.name} ({availableIngredient.unit})
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                value={ingredient.amount}
-                onChange={(e) =>
-                  updateIngredient(index, "amount", Number(e.target.value))
-                }
-                className="w-24 p-2 border rounded"
-                min="0.1"
-                step="0.1"
-              />
-              <button
-                type="button"
-                onClick={() => removeIngredient(index)}
-                className="text-red-500"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
+          {ingredients.map((ingredient, index) => {
+            const ingredientDetails = getIngredientDetails(ingredient.ingredient_id);
+            return (
+              <div key={index} className="flex items-center space-x-2 mb-2">
+                <div className="flex-1 p-2 border rounded bg-gray-50">
+                  {ingredientDetails ? (
+                    `${ingredientDetails.name} (${ingredientDetails.unit})`
+                  ) : (
+                    "Unknown Ingredient"
+                  )}
+                </div>
+                <input
+                  type="number"
+                  value={ingredient.amount}
+                  onChange={(e) =>
+                    updateIngredient(index, "amount", Number(e.target.value))
+                  }
+                  className="w-24 p-2 border rounded"
+                  min="0.1"
+                  step="0.1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeIngredient(index)}
+                  className="text-red-500"
+                >
+                  Remove
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         <button
@@ -252,6 +247,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
           Create Recipe
         </button>
       </form>
+
+      {showIngredientPopup && (
+        <IngredientPopup
+          availableIngredients={availableIngredients}
+          onSelectIngredient={handleIngredientSelected}
+          onClose={() => setShowIngredientPopup(false)}
+        />
+      )}
     </div>
   );
 };
