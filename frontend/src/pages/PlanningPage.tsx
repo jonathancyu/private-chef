@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import { Recipe, MealType, PlannedMeal } from "../types/api.types";
-import { getRecipes, createPlannedMeal, getPlannedMeals } from "../services/api";
+import { getRecipes, createPlannedMeal, getPlannedMeals, deletePlannedMeal } from "../services/api";
 import RecipePopup from "../components/meals/RecipePopup";
 
 const PlanningPage: React.FC = () => {
@@ -52,6 +52,15 @@ const PlanningPage: React.FC = () => {
     }
   };
 
+  const handleDeleteMeal = async (mealId: number) => {
+    try {
+      await deletePlannedMeal(mealId);
+      setPlannedMeals(plannedMeals.filter((meal) => meal.id !== mealId));
+    } catch (error) {
+      console.error("Failed to delete planned meal", error);
+    }
+  };
+
   const getMealsForType = (mealType: MealType) => {
     return plannedMeals.filter((meal) => meal.meal_type === mealType);
   };
@@ -75,8 +84,16 @@ const PlanningPage: React.FC = () => {
                     {meal.servings} serving(s)
                   </div>
                 </div>
-                <div className="text-sm text-gray-600">
-                  {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm text-gray-600">
+                    {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
+                  </div>
+                  <button
+                    onClick={() => handleDeleteMeal(meal.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             );

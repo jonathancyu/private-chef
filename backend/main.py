@@ -277,6 +277,30 @@ def get_planned_meals(
     )
 
 
+@app.delete("/planned-meals/{meal_id}/", response_model=PlannedMealInDB)
+def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)) -> PlannedMealInDB:
+    """
+    Delete a planned meal.
+
+    Parameters:
+        meal_id: int - ID of the planned meal to delete
+        db: Session - Database session dependency
+
+    Returns:
+        PlannedMealInDB - The deleted planned meal
+
+    Raises:
+        HTTPException: If the planned meal is not found
+    """
+    db_planned_meal = db.query(PlannedMeal).filter(PlannedMeal.id == meal_id).first()
+    if not db_planned_meal:
+        raise HTTPException(status_code=404, detail="Planned meal not found")
+    
+    db.delete(db_planned_meal)
+    db.commit()
+    return db_planned_meal
+
+
 # Inventory endpoints
 @app.post("/inventory/", response_model=InventoryItemInDB)
 def add_to_inventory(

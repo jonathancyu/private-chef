@@ -53,6 +53,9 @@ export const getPlannedMeals = (startDate: string, endDate: string) =>
 export const createPlannedMeal = (plannedMeal: Omit<PlannedMeal, "id">) =>
   api.post<PlannedMeal>("/planned-meals/", plannedMeal).then((res) => res.data);
 
+export const deletePlannedMeal = (id: number) =>
+  api.delete(`/planned-meals/${id}/`).then((res) => res.data);
+
 export const createWeeklyMealPlan = (plannedMeals: Omit<PlannedMeal, "id">[]) =>
   api
     .post<PlannedMeal[]>("/planned-meals/week/", plannedMeals)
