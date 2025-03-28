@@ -84,17 +84,10 @@ const PlanningPage: React.FC = () => {
     );
   };
 
-  const renderMealSection = (date: string, mealType: MealType, title: string, showLabel: boolean = false) => {
+  const renderMealSection = (date: string, mealType: MealType, title: string) => {
     const meals = getMealsForDateAndType(date, mealType);
     return (
-      <div className="relative h-[120px] border-b border-gray-200 last:border-b-0 flex">
-        {showLabel && (
-          <div className="absolute left-[-40px] h-[120px] flex items-center">
-            <div className="text-indigo-600 text-sm font-medium rotate-[-90deg] origin-center whitespace-nowrap">
-              {title}
-            </div>
-          </div>
-        )}
+      <div className="h-[120px] border-b border-r border-gray-200 last:border-b-0">
         <div className="flex-1 space-y-1">
           {meals.map((meal) => {
             const recipe = recipes.find((r) => r.id === meal.recipe_id);
@@ -145,10 +138,10 @@ const PlanningPage: React.FC = () => {
           {dayName}
         </div>
         <div className="bg-gray-50">
-          {renderMealSection(date, MealType.BREAKFAST, "Breakfast", isFirstDay)}
-          {renderMealSection(date, MealType.LUNCH, "Lunch", isFirstDay)}
-          {renderMealSection(date, MealType.DINNER, "Dinner", isFirstDay)}
-          {renderMealSection(date, MealType.SNACK, "Snacks", isFirstDay)}
+          {renderMealSection(date, MealType.BREAKFAST, "Breakfast")}
+          {renderMealSection(date, MealType.LUNCH, "Lunch")}
+          {renderMealSection(date, MealType.DINNER, "Dinner")}
+          {renderMealSection(date, MealType.SNACK, "Snacks")}
         </div>
       </div>
     );
@@ -168,6 +161,19 @@ const PlanningPage: React.FC = () => {
     return days;
   };
 
+  // Add this helper function to calculate average calories for a meal type
+  const getAverageCaloriesForMealType = (mealType: MealType) => {
+    const mealsOfType = plannedMeals.filter(meal => meal.meal_type === mealType);
+    if (mealsOfType.length === 0) return 0;
+    
+    const totalCalories = mealsOfType.reduce((sum, meal) => {
+      const recipe = recipes.find(r => r.id === meal.recipe_id);
+      return sum + (recipe?.calories_per_serving || 0) * meal.servings;
+    }, 0);
+    
+    return Math.round(totalCalories / mealsOfType.length);
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
@@ -185,15 +191,43 @@ const PlanningPage: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <div className="relative">
-              {/* Main table with rounded box */}
-              <div className="border border-gray-300 rounded-lg">
-                <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
-                  {/* Days columns */}
-                  {getWeekDays(selectedWeek).map((day, index) => (
-                    <div key={day.date} className="flex flex-col">
-                      {renderDayColumn(day.date, day.name, index === 0)}
+            <div className="relative flex gap-4">
+              {/* Meal Types Table */}
+              <div className="w-[100px] border border-gray-300 rounded-lg mt-[41px] overflow-hidden">
+                <div className="bg-gray-50">
+                  {[
+                    { type: MealType.BREAKFAST, label: "Breakfast" },
+                    { type: MealType.LUNCH, label: "Lunch" },
+                    { type: MealType.DINNER, label: "Dinner" },
+                    { type: MealType.SNACK, label: "Snacks" }
+                  ].map(({ type, label }, index) => (
+                    <div key={type} className={`h-[120px] p-4 ${index !== 3 ? 'border-b border-gray-300' : ''}`}>
+                      <div className="font-medium text-indigo-600">{label}</div>
+                      <div className="text-sm text-gray-600">
+                        Avg: {getAverageCaloriesForMealType(type)} cal
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Main Planning Table */}
+              <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden">
+                <div className="grid grid-cols-7">
+                  {getWeekDays(selectedWeek).map(day => (
+                    <div key={day.date} className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0">
+                      {day.name}
+                    </div>
+                  ))}
+                  {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((mealType, mealIndex) => (
+                    getWeekDays(selectedWeek).map((day, dayIndex) => (
+                      <div 
+                        key={`${day.date}-${mealType}`} 
+                        className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? 'border-b border-gray-300' : ''}`}
+                      >
+                        {renderMealSection(day.date, mealType, "")}
+                      </div>
+                    ))
                   ))}
                 </div>
               </div>
