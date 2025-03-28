@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import { Recipe, MealType, PlannedMeal } from "../types/api.types";
-import { getRecipes, createPlannedMeal, getPlannedMeals, deletePlannedMeal } from "../services/api";
+import { getRecipes, createPlannedMeal, getPlannedMeals, deletePlannedMeal, updatePlannedMeal } from "../services/api";
 import RecipePopup from "../components/meals/RecipePopup";
+import MealPopup from '../components/meals/MealPopup';
 
 const PlanningPage: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -14,6 +15,8 @@ const PlanningPage: React.FC = () => {
   const [showRecipePopup, setShowRecipePopup] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showMealPopup, setShowMealPopup] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<PlannedMeal | null>(null);
 
   // Get the start and end dates for the selected week
   const getWeekDates = (dateString: string) => {
@@ -78,6 +81,17 @@ const PlanningPage: React.FC = () => {
     }
   };
 
+  const handleUpdateServings = async (mealId: number, newServings: number) => {
+    try {
+      await updatePlannedMeal(mealId, { servings: newServings });
+      setPlannedMeals(plannedMeals.map(meal => 
+        meal.id === mealId ? { ...meal, servings: newServings } : meal
+      ));
+    } catch (error) {
+      console.error("Failed to update servings", error);
+    }
+  };
+
   const getMealsForDateAndType = (date: string, mealType: MealType) => {
     return plannedMeals.filter(
       (meal) => meal.date === date && meal.meal_type === mealType
@@ -87,22 +101,18 @@ const PlanningPage: React.FC = () => {
   const renderMealSection = (date: string, mealType: MealType, title: string) => {
     const meals = getMealsForDateAndType(date, mealType);
     return (
-      <div 
-        className="h-[120px] border-b border-r border-gray-200 last:border-b-0 cursor-pointer hover:bg-gray-100"
-        onClick={() => {
-          setSelectedDate(date);
-          setSelectedMealType(mealType);
-          setShowRecipePopup(true);
-        }}
-      >
-        <div className="h-full overflow-y-auto">
+      <div className="h-[120px] border-b border-r border-gray-200 last:border-b-0">
+        <div className="h-full overflow-y-auto scrollbar-hide">
           {meals.map((meal) => {
             const recipe = recipes.find((r) => r.id === meal.recipe_id);
             return (
               <div
                 key={meal.id}
-                className="h-12 bg-white mb-1 px-2 py-1.5 flex justify-between items-start shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-                onClick={(e) => e.stopPropagation()}
+                className="h-12 bg-white mb-1 px-2 py-1.5 flex justify-between items-start shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  setSelectedMeal(meal);
+                  setShowMealPopup(true);
+                }}
               >
                 <div className="flex flex-col">
                   <span className="truncate text-sm font-medium">{recipe?.name}</span>
@@ -110,16 +120,37 @@ const PlanningPage: React.FC = () => {
                     {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
                   </span>
                 </div>
-                <button
-                  onClick={() => handleDeleteMeal(meal.id)}
-                  className="text-red-500 hover:text-red-700 text-xs"
-                >
-                  ×
-                </button>
               </div>
             );
           })}
+          <button
+            className="w-full h-8 bg-gray-50 mb-1 px-2 py-0.5 flex items-center justify-center text-gray-500 hover:text-gray-700 text-xs hover:bg-gray-100 hover:border-gray-300 transition-colors cursor-pointer"
+            onClick={() => {
+              setSelectedDate(date);
+              setSelectedMealType(mealType);
+              setShowRecipePopup(true);
+            }}
+          >
+            + Add
+          </button>
         </div>
+
+        {showMealPopup && selectedMeal && (
+          <MealPopup
+            recipeName={recipes.find(r => r.id === selectedMeal.recipe_id)?.name || ''}
+            currentServings={selectedMeal.servings}
+            onUpdateServings={(servings: number) => handleUpdateServings(selectedMeal.id, servings)}
+            onUnplan={() => {
+              handleDeleteMeal(selectedMeal.id);
+              setShowMealPopup(false);
+              setSelectedMeal(null);
+            }}
+            onClose={() => {
+              setShowMealPopup(false);
+              setSelectedMeal(null);
+            }}
+          />
+        )}
       </div>
     );
   };

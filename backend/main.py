@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import Any, Generator, List
+from typing import Any, Generator, List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime, date
 
@@ -298,6 +298,46 @@ def delete_planned_meal(meal_id: int, db: Session = Depends(get_db)) -> PlannedM
     
     db.delete(db_planned_meal)
     db.commit()
+    return db_planned_meal
+
+
+# Add this new Pydantic model for updates
+class PlannedMealUpdate(BaseModel):
+    """Model for planned meal updates"""
+    servings: Optional[float] = None
+
+
+# Add this new endpoint after the delete_planned_meal endpoint
+@app.patch("/planned-meals/{meal_id}/", response_model=PlannedMealInDB)
+def update_planned_meal(
+    meal_id: int,
+    updates: PlannedMealUpdate,
+    db: Session = Depends(get_db)
+) -> PlannedMealInDB:
+    """
+    Update a planned meal.
+
+    Parameters:
+        meal_id: int - ID of the planned meal to update
+        updates: PlannedMealUpdate - The updates to apply
+        db: Session - Database session dependency
+
+    Returns:
+        PlannedMealInDB - The updated planned meal
+
+    Raises:
+        HTTPException: If the planned meal is not found
+    """
+    db_planned_meal = db.query(PlannedMeal).filter(PlannedMeal.id == meal_id).first()
+    if not db_planned_meal:
+        raise HTTPException(status_code=404, detail="Planned meal not found")
+    
+    # Update only the provided fields
+    for field, value in updates.dict(exclude_unset=True).items():
+        setattr(db_planned_meal, field, value)
+    
+    db.commit()
+    db.refresh(db_planned_meal)
     return db_planned_meal
 
 

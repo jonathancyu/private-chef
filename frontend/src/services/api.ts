@@ -86,3 +86,19 @@ export const recordEatenMeal = (eatenMeal: Omit<EatenMeal, "id" | "date">) =>
 // Macros
 export const getDailyMacros = (date: string) =>
   api.get<MacrosSummary>(`/macros/daily/?day=${date}`).then((res) => res.data);
+
+export const updatePlannedMeal = async (mealId: number, updates: Partial<PlannedMeal>) => {
+  const response = await fetch(`${API_URL}/planned-meals/${mealId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updates),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to update planned meal');
+  }
+  
+  return response.json();
+};
