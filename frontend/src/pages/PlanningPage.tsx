@@ -84,17 +84,24 @@ const PlanningPage: React.FC = () => {
     );
   };
 
-  const renderMealSection = (date: string, mealType: MealType, title: string) => {
+  const renderMealSection = (date: string, mealType: MealType, title: string, showLabel: boolean = false) => {
     const meals = getMealsForDateAndType(date, mealType);
     return (
-      <div className="min-h-[120px]">
-        <div className="space-y-1">
+      <div className="relative h-[120px] border-b border-gray-200 last:border-b-0 flex">
+        {showLabel && (
+          <div className="absolute left-[-40px] h-[120px] flex items-center">
+            <div className="text-indigo-600 text-sm font-medium rotate-[-90deg] origin-center whitespace-nowrap">
+              {title}
+            </div>
+          </div>
+        )}
+        <div className="flex-1 space-y-1">
           {meals.map((meal) => {
             const recipe = recipes.find((r) => r.id === meal.recipe_id);
             return (
               <div
                 key={meal.id}
-                className="bg-white p-2 rounded shadow-sm flex justify-between items-center text-sm"
+                className="bg-white p-2 flex justify-between items-center text-sm"
               >
                 <div>
                   <div className="font-medium">{recipe?.name}</div>
@@ -131,17 +138,17 @@ const PlanningPage: React.FC = () => {
     );
   };
 
-  const renderDayColumn = (date: string, dayName: string) => {
+  const renderDayColumn = (date: string, dayName: string, isFirstDay: boolean = false) => {
     return (
-      <div className="flex-1 min-w-0">
-        <div className="bg-indigo-50 p-2 rounded-t text-center font-medium">
+      <div className="flex-1 min-w-0 border-r border-gray-300 last:border-r-0">
+        <div className="bg-indigo-600 text-white p-2 text-center font-medium">
           {dayName}
         </div>
-        <div className="bg-white p-2 rounded-b space-y-2">
-          {renderMealSection(date, MealType.BREAKFAST, "Breakfast")}
-          {renderMealSection(date, MealType.LUNCH, "Lunch")}
-          {renderMealSection(date, MealType.DINNER, "Dinner")}
-          {renderMealSection(date, MealType.SNACK, "Snacks")}
+        <div className="bg-gray-50">
+          {renderMealSection(date, MealType.BREAKFAST, "Breakfast", isFirstDay)}
+          {renderMealSection(date, MealType.LUNCH, "Lunch", isFirstDay)}
+          {renderMealSection(date, MealType.DINNER, "Dinner", isFirstDay)}
+          {renderMealSection(date, MealType.SNACK, "Snacks", isFirstDay)}
         </div>
       </div>
     );
@@ -161,16 +168,6 @@ const PlanningPage: React.FC = () => {
     return days;
   };
 
-  const renderMealTypeLabel = (title: string) => {
-    return (
-      <div className="min-h-[120px] flex items-center">
-        <div className="bg-indigo-50 p-2 rounded text-sm font-medium">
-          {title}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
@@ -188,22 +185,18 @@ const PlanningPage: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-2">
-              {/* Labels column */}
-              <div className="space-y-2">
-                <div className="h-8"></div> {/* Spacer for day headers */}
-                {renderMealTypeLabel("Breakfast")}
-                {renderMealTypeLabel("Lunch")}
-                {renderMealTypeLabel("Dinner")}
-                {renderMealTypeLabel("Snacks")}
-              </div>
-
-              {/* Days columns */}
-              {getWeekDays(selectedWeek).map((day) => (
-                <div key={day.date} className="flex flex-col">
-                  {renderDayColumn(day.date, day.name)}
+            <div className="relative">
+              {/* Main table with rounded box */}
+              <div className="border border-gray-300 rounded-lg">
+                <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr]">
+                  {/* Days columns */}
+                  {getWeekDays(selectedWeek).map((day, index) => (
+                    <div key={day.date} className="flex flex-col">
+                      {renderDayColumn(day.date, day.name, index === 0)}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
