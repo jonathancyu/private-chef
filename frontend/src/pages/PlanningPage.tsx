@@ -88,36 +88,38 @@ const PlanningPage: React.FC = () => {
     const meals = getMealsForDateAndType(date, mealType);
     return (
       <div 
-        className="h-[120px] border-b border-r border-gray-200 last:border-b-0"
+        className="h-[120px] border-b border-r border-gray-200 last:border-b-0 cursor-pointer hover:bg-gray-100"
         onClick={() => {
           setSelectedDate(date);
           setSelectedMealType(mealType);
           setShowRecipePopup(true);
         }}
       >
-        {meals.map((meal) => {
-          const recipe = recipes.find((r) => r.id === meal.recipe_id);
-          return (
-            <div
-              key={meal.id}
-              className="h-12 bg-white mb-1 px-2 py-1.5 flex justify-between items-start"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col">
-                <span className="truncate text-sm">{recipe?.name}</span>
-                <span className="text-xs text-gray-600">
-                  {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
-                </span>
-              </div>
-              <button
-                onClick={() => handleDeleteMeal(meal.id)}
-                className="text-red-500 hover:text-red-700 text-xs"
+        <div className="h-full overflow-y-auto">
+          {meals.map((meal) => {
+            const recipe = recipes.find((r) => r.id === meal.recipe_id);
+            return (
+              <div
+                key={meal.id}
+                className="h-12 bg-white mb-1 px-2 py-1.5 flex justify-between items-start shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                onClick={(e) => e.stopPropagation()}
               >
-                ×
-              </button>
-            </div>
-          );
-        })}
+                <div className="flex flex-col">
+                  <span className="truncate text-sm font-medium">{recipe?.name}</span>
+                  <span className="text-xs text-gray-600">
+                    {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleDeleteMeal(meal.id)}
+                  className="text-red-500 hover:text-red-700 text-xs"
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
