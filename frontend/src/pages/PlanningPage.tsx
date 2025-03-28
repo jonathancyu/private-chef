@@ -1,74 +1,118 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
-import RecipeForm from "../components/meals/RecipeForm";
-import { Recipe } from "../types/api.types";
-import { getRecipes } from "../services/api";
+import { Recipe, MealType, PlannedMeal } from "../types/api.types";
+import { getRecipes, createPlannedMeal, getPlannedMeals } from "../services/api";
 
 const PlanningPage: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
   useEffect(() => {
-    const loadRecipes = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const data = await getRecipes();
-        setRecipes(data);
+        const [recipesData, plannedMealsData] = await Promise.all([
+          getRecipes(),
+          getPlannedMeals(selectedDate, selectedDate),
+        ]);
+        setRecipes(recipesData);
+        setPlannedMeals(plannedMealsData);
       } catch (error) {
-        console.error("Failed to load recipes", error);
+        console.error("Failed to load data", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadRecipes();
-  }, []);
+    loadData();
+  }, [selectedDate]);
 
-  const handleRecipeCreated = (recipe: Recipe) => {
-    setRecipes([...recipes, recipe]);
+  const handleAddMeal = async (recipeId: number, mealType: MealType) => {
+    try {
+      const newPlannedMeal = await createPlannedMeal({
+        date: selectedDate,
+        meal_type: mealType,
+        recipe_id: recipeId,
+        servings: 1,
+      });
+      setPlannedMeals([...plannedMeals, newPlannedMeal]);
+    } catch (error) {
+      console.error("Failed to add planned meal", error);
+    }
+  };
+
+  const getMealsForType = (mealType: MealType) => {
+    return plannedMeals.filter((meal) => meal.meal_type === mealType);
+  };
+
+  const renderMealSection = (mealType: MealType, title: string) => {
+    const meals = getMealsForType(mealType);
+    return (
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-3">{title}</h3>
+        <div className="space-y-2">
+          {meals.map((meal) => {
+            const recipe = recipes.find((r) => r.id === meal.recipe_id);
+            return (
+              <div
+                key={meal.id}
+                className="bg-white p-3 rounded shadow flex justify-between items-center"
+              >
+                <div>
+                  <div className="font-medium">{recipe?.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {meal.servings} serving(s)
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
+                </div>
+              </div>
+            );
+          })}
+          <button
+            onClick={() => handleAddMeal(recipes[0]?.id || 0, mealType)}
+            className="w-full bg-indigo-50 text-indigo-700 px-3 py-2 rounded hover:bg-indigo-100 text-sm"
+          >
+            + Add {title}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
     <Layout>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <RecipeForm onRecipeCreated={handleRecipeCreated} />
-        </div>
-        <div>
-          <div className="bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-semibold mb-4">Your Recipes</h2>
-
-            {loading ? (
-              <div className="text-center py-8">Loading recipes...</div>
-            ) : recipes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No recipes yet. Create your first recipe!
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recipes.map((recipe) => (
-                  <div key={recipe.id} className="border rounded p-4">
-                    <h3 className="font-semibold text-lg">{recipe.name}</h3>
-                    <div className="flex justify-between text-sm text-gray-600 mt-1">
-                      <span>{recipe.servings} servings</span>
-                      <span>
-                        {recipe.calories_per_serving} calories per serving
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {recipe.protein_per_serving}g protein |{" "}
-                      {recipe.carbs_per_serving}g carbs |{" "}
-                      {recipe.fat_per_serving}g fat
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white p-6 rounded shadow mb-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">Meal Planning</h2>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="p-2 border rounded"
+            />
           </div>
+
+          {loading ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : (
+            <div>
+              {renderMealSection(MealType.BREAKFAST, "Breakfast")}
+              {renderMealSection(MealType.LUNCH, "Lunch")}
+              {renderMealSection(MealType.DINNER, "Dinner")}
+              {renderMealSection(MealType.SNACK, "Snacks")}
+            </div>
+          )}
         </div>
       </div>
     </Layout>
   );
 };
 
-export default PlanningPage;
+export default PlanningPage; 

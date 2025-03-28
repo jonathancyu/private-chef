@@ -22,6 +22,14 @@ const Header: React.FC = () => {
               </li>
               <li>
                 <Link
+                  to="/recipes"
+                  className={`px-3 py-2 rounded ${isActive("/recipes")}`}
+                >
+                  Recipes
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/planning"
                   className={`px-3 py-2 rounded ${isActive("/planning")}`}
                 >

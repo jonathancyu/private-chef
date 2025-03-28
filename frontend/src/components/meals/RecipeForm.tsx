@@ -21,20 +21,22 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
   >([]);
   const [showIngredientPopup, setShowIngredientPopup] = useState(false);
 
-  useEffect(() => {
-    const loadIngredients = async () => {
-      try {
-        const ingredients = await getIngredients();
-        setAvailableIngredients(ingredients);
-      } catch (error) {
-        console.error("Failed to load ingredients", error);
-      }
-    };
+  const loadIngredients = async () => {
+    try {
+      const ingredients = await getIngredients();
+      setAvailableIngredients(ingredients);
+    } catch (error) {
+      console.error("Failed to load ingredients", error);
+    }
+  };
 
+  useEffect(() => {
     loadIngredients();
   }, []);
 
-  const handleIngredientSelected = (ingredientId: number) => {
+  const handleIngredientSelected = async (ingredientId: number) => {
+    // Refresh the ingredients list to get the newly created ingredient
+    await loadIngredients();
     setIngredients([
       ...ingredients,
       { id: 0, ingredient_id: ingredientId, amount: 1 },

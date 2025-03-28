@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="space-y-2">
               <a
-                href="/planning"
+                href="/recipes"
                 className="block bg-indigo-50 hover:bg-indigo-100 p-3 rounded"
               >
                 <div className="font-medium text-indigo-700">Create Recipe</div>
