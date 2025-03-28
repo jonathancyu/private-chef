@@ -196,17 +196,32 @@ const PlanningPage: React.FC = () => {
     return days;
   };
 
-  // Add this helper function to calculate average calories for a meal type
+  // Add this helper function before getAverageCaloriesForMealType
+  const getCaloriesForMeal = (meal: PlannedMeal) => {
+    const recipe = meal.recipe_id ? recipes.find(r => r.id === meal.recipe_id) : null;
+    const snack = meal.snack_id ? snacks.find(s => s.id === meal.snack_id) : null;
+    const item = recipe || snack;
+    return item ? item.calories_per_serving * meal.servings : 0;
+  };
+
+  // Update the average calories calculation
   const getAverageCaloriesForMealType = (mealType: MealType) => {
     const mealsOfType = plannedMeals.filter(meal => meal.meal_type === mealType);
     if (mealsOfType.length === 0) return 0;
     
     const totalCalories = mealsOfType.reduce((sum, meal) => {
-      const recipe = recipes.find(r => r.id === meal.recipe_id);
-      return sum + (recipe?.calories_per_serving || 0) * meal.servings;
+      return sum + getCaloriesForMeal(meal);
     }, 0);
     
-    return Math.round(totalCalories / mealsOfType.length);
+    // Average over 7 days (number of meal slots) rather than number of items
+    return Math.round(totalCalories / 7);
+  };
+
+  // Add a function to get total calories for a meal type
+  const getTotalCaloriesForMealType = (mealType: MealType) => {
+    return plannedMeals
+      .filter(meal => meal.meal_type === mealType)
+      .reduce((sum, meal) => sum + getCaloriesForMeal(meal), 0);
   };
 
   // Add this helper function near the other helper functions
