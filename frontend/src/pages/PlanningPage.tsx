@@ -8,19 +8,35 @@ const PlanningPage: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedDate, setSelectedDate] = useState<string>(
+  const [selectedWeek, setSelectedWeek] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [showRecipePopup, setShowRecipePopup] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Get the start and end dates for the selected week
+  const getWeekDates = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const startDate = new Date(date.setDate(diff));
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    return { startDate, endDate };
+  };
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
+        const { startDate, endDate } = getWeekDates(selectedWeek);
         const [recipesData, plannedMealsData] = await Promise.all([
           getRecipes(),
-          getPlannedMeals(selectedDate, selectedDate),
+          getPlannedMeals(
+            startDate.toISOString().split("T")[0],
+            endDate.toISOString().split("T")[0]
+          ),
         ]);
         setRecipes(recipesData);
         setPlannedMeals(plannedMealsData);
@@ -32,10 +48,10 @@ const PlanningPage: React.FC = () => {
     };
 
     loadData();
-  }, [selectedDate]);
+  }, [selectedWeek]);
 
   const handleAddMeal = async (recipeId: number) => {
-    if (!selectedMealType) return;
+    if (!selectedMealType || !selectedDate) return;
     
     try {
       const newPlannedMeal = await createPlannedMeal({
@@ -47,6 +63,7 @@ const PlanningPage: React.FC = () => {
       setPlannedMeals([...plannedMeals, newPlannedMeal]);
       setShowRecipePopup(false);
       setSelectedMealType(null);
+      setSelectedDate(null);
     } catch (error) {
       console.error("Failed to add planned meal", error);
     }
@@ -61,38 +78,39 @@ const PlanningPage: React.FC = () => {
     }
   };
 
-  const getMealsForType = (mealType: MealType) => {
-    return plannedMeals.filter((meal) => meal.meal_type === mealType);
+  const getMealsForDateAndType = (date: string, mealType: MealType) => {
+    return plannedMeals.filter(
+      (meal) => meal.date === date && meal.meal_type === mealType
+    );
   };
 
-  const renderMealSection = (mealType: MealType, title: string) => {
-    const meals = getMealsForType(mealType);
+  const renderMealSection = (date: string, mealType: MealType, title: string) => {
+    const meals = getMealsForDateAndType(date, mealType);
     return (
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">{title}</h3>
-        <div className="space-y-2">
+      <div className="min-h-[120px]">
+        <div className="space-y-1">
           {meals.map((meal) => {
             const recipe = recipes.find((r) => r.id === meal.recipe_id);
             return (
               <div
                 key={meal.id}
-                className="bg-white p-3 rounded shadow flex justify-between items-center"
+                className="bg-white p-2 rounded shadow-sm flex justify-between items-center text-sm"
               >
                 <div>
                   <div className="font-medium">{recipe?.name}</div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs text-gray-600">
                     {meal.servings} serving(s)
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-sm text-gray-600">
+                <div className="flex items-center space-x-2">
+                  <div className="text-xs text-gray-600">
                     {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
                   </div>
                   <button
                     onClick={() => handleDeleteMeal(meal.id)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 text-xs"
                   >
-                    Delete
+                    ×
                   </button>
                 </div>
               </div>
@@ -100,13 +118,54 @@ const PlanningPage: React.FC = () => {
           })}
           <button
             onClick={() => {
+              setSelectedDate(date);
               setSelectedMealType(mealType);
               setShowRecipePopup(true);
             }}
-            className="w-full bg-indigo-50 text-indigo-700 px-3 py-2 rounded hover:bg-indigo-100 text-sm"
+            className="w-full text-indigo-600 hover:text-indigo-800 text-sm text-left p-1"
           >
-            + Add {title}
+            + Add
           </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDayColumn = (date: string, dayName: string) => {
+    return (
+      <div className="flex-1 min-w-0">
+        <div className="bg-indigo-50 p-2 rounded-t text-center font-medium">
+          {dayName}
+        </div>
+        <div className="bg-white p-2 rounded-b space-y-2">
+          {renderMealSection(date, MealType.BREAKFAST, "Breakfast")}
+          {renderMealSection(date, MealType.LUNCH, "Lunch")}
+          {renderMealSection(date, MealType.DINNER, "Dinner")}
+          {renderMealSection(date, MealType.SNACK, "Snacks")}
+        </div>
+      </div>
+    );
+  };
+
+  const getWeekDays = (dateString: string) => {
+    const { startDate } = getWeekDates(dateString);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      days.push({
+        date: date.toISOString().split("T")[0],
+        name: date.toLocaleDateString("en-US", { weekday: "short" }),
+      });
+    }
+    return days;
+  };
+
+  const renderMealTypeLabel = (title: string) => {
+    return (
+      <div className="min-h-[120px] flex items-center">
+        <div className="bg-indigo-50 p-2 rounded text-sm font-medium">
+          {title}
         </div>
       </div>
     );
@@ -114,14 +173,14 @@ const PlanningPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="bg-white p-6 rounded shadow mb-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Meal Planning</h2>
             <input
               type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(e.target.value)}
               className="p-2 border rounded"
             />
           </div>
@@ -129,11 +188,22 @@ const PlanningPage: React.FC = () => {
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <div>
-              {renderMealSection(MealType.BREAKFAST, "Breakfast")}
-              {renderMealSection(MealType.LUNCH, "Lunch")}
-              {renderMealSection(MealType.DINNER, "Dinner")}
-              {renderMealSection(MealType.SNACK, "Snacks")}
+            <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-2">
+              {/* Labels column */}
+              <div className="space-y-2">
+                <div className="h-8"></div> {/* Spacer for day headers */}
+                {renderMealTypeLabel("Breakfast")}
+                {renderMealTypeLabel("Lunch")}
+                {renderMealTypeLabel("Dinner")}
+                {renderMealTypeLabel("Snacks")}
+              </div>
+
+              {/* Days columns */}
+              {getWeekDays(selectedWeek).map((day) => (
+                <div key={day.date} className="flex flex-col">
+                  {renderDayColumn(day.date, day.name)}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -145,6 +215,7 @@ const PlanningPage: React.FC = () => {
             onClose={() => {
               setShowRecipePopup(false);
               setSelectedMealType(null);
+              setSelectedDate(null);
             }}
           />
         )}
