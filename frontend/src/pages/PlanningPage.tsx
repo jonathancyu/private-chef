@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
-import { Recipe, MealType, PlannedMeal } from "../types/api.types";
-import { getRecipes, createPlannedMeal, getPlannedMeals, deletePlannedMeal, updatePlannedMeal } from "../services/api";
-import RecipePopup from "../components/meals/RecipePopup";
-import MealPopup from '../components/meals/MealPopup';
+import { Recipe, MealType, PlannedMeal, Snack } from "../types/api.types";
+import { getRecipes, createPlannedMeal, getPlannedMeals, deletePlannedMeal, updatePlannedMeal, getSnacks } from "../services/api";
+import PlanningPopup from "../components/meals/PlanningPopup";
+import MealPopup from "../components/meals/MealPopup";
 
 const PlanningPage: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [snacks, setSnacks] = useState<Snack[]>([]);
   const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedWeek, setSelectedWeek] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [showRecipePopup, setShowRecipePopup] = useState(false);
+  const [showPlanningPopup, setShowPlanningPopup] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showMealPopup, setShowMealPopup] = useState(false);
@@ -34,14 +35,16 @@ const PlanningPage: React.FC = () => {
       try {
         setLoading(true);
         const { startDate, endDate } = getWeekDates(selectedWeek);
-        const [recipesData, plannedMealsData] = await Promise.all([
+        const [recipesData, snacksData, plannedMealsData] = await Promise.all([
           getRecipes(),
+          getSnacks(),
           getPlannedMeals(
             startDate.toISOString().split("T")[0],
             endDate.toISOString().split("T")[0]
           ),
         ]);
         setRecipes(recipesData);
+        setSnacks(snacksData);
         setPlannedMeals(plannedMealsData);
       } catch (error) {
         console.error("Failed to load data", error);
@@ -53,18 +56,19 @@ const PlanningPage: React.FC = () => {
     loadData();
   }, [selectedWeek]);
 
-  const handleAddMeal = async (recipeId: number) => {
+  const handleAddMeal = async (itemId: number, isSnack: boolean) => {
     if (!selectedMealType || !selectedDate) return;
     
     try {
       const newPlannedMeal = await createPlannedMeal({
         date: selectedDate,
         meal_type: selectedMealType,
-        recipe_id: recipeId,
+        recipe_id: isSnack ? undefined : itemId,
+        snack_id: isSnack ? itemId : undefined,
         servings: 1,
       });
       setPlannedMeals([...plannedMeals, newPlannedMeal]);
-      setShowRecipePopup(false);
+      setShowPlanningPopup(false);
       setSelectedMealType(null);
       setSelectedDate(null);
     } catch (error) {
@@ -104,7 +108,10 @@ const PlanningPage: React.FC = () => {
       <div key={key} className="h-[120px] border-b border-r border-gray-200 last:border-b-0">
         <div className="h-full overflow-y-auto scrollbar-hide">
           {meals.map((meal) => {
-            const recipe = recipes.find((r) => r.id === meal.recipe_id);
+            const recipe = meal.recipe_id ? recipes.find((r) => r.id === meal.recipe_id) : null;
+            const snack = meal.snack_id ? snacks.find((s) => s.id === meal.snack_id) : null;
+            const item = recipe || snack;
+            
             return (
               <div
                 key={meal.id}
@@ -115,9 +122,9 @@ const PlanningPage: React.FC = () => {
                 }}
               >
                 <div className="flex flex-col">
-                  <span className="truncate text-sm font-medium">{recipe?.name}</span>
+                  <span className="truncate text-sm font-medium">{item?.name}</span>
                   <span className="text-xs text-gray-600">
-                    {recipe?.calories_per_serving ? recipe.calories_per_serving * meal.servings : 0} cal
+                    {item?.calories_per_serving ? item.calories_per_serving * meal.servings : 0} cal
                   </span>
                 </div>
               </div>
@@ -128,7 +135,7 @@ const PlanningPage: React.FC = () => {
             onClick={() => {
               setSelectedDate(date);
               setSelectedMealType(mealType);
-              setShowRecipePopup(true);
+              setShowPlanningPopup(true);
             }}
           >
             + Add
@@ -137,7 +144,11 @@ const PlanningPage: React.FC = () => {
 
         {showMealPopup && selectedMeal && (
           <MealPopup
-            recipeName={recipes.find(r => r.id === selectedMeal.recipe_id)?.name || ''}
+            recipeName={
+              selectedMeal.recipe_id
+                ? recipes.find(r => r.id === selectedMeal.recipe_id)?.name || ''
+                : snacks.find(s => s.id === selectedMeal.snack_id)?.name || ''
+            }
             currentServings={selectedMeal.servings}
             onUpdateServings={(servings: number) => handleUpdateServings(selectedMeal.id, servings)}
             onUnplan={() => {
@@ -299,12 +310,13 @@ const PlanningPage: React.FC = () => {
           )}
         </div>
 
-        {showRecipePopup && (
-          <RecipePopup
+        {showPlanningPopup && (
+          <PlanningPopup
             availableRecipes={recipes}
-            onSelectRecipe={handleAddMeal}
+            availableSnacks={snacks}
+            onSelect={handleAddMeal}
             onClose={() => {
-              setShowRecipePopup(false);
+              setShowPlanningPopup(false);
               setSelectedMealType(null);
               setSelectedDate(null);
             }}
