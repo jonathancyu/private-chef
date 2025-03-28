@@ -17,8 +17,19 @@ const MealPopup: React.FC<MealPopupProps> = ({
 }) => {
   const [servings, setServings] = useState(currentServings);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    // Only close if the click is directly on the background (not on the popup content)
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50"
+      onClick={handleBackgroundClick}
+    >
       <div
         ref={popupRef}
         className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl"
@@ -69,4 +80,3 @@ const MealPopup: React.FC<MealPopupProps> = ({
 };
 
 export default MealPopup;
-

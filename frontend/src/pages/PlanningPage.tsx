@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import { Recipe, MealType, PlannedMeal, Snack } from "../types/api.types";
-import { getRecipes, createPlannedMeal, getPlannedMeals, deletePlannedMeal, updatePlannedMeal, getSnacks } from "../services/api";
+import {
+  getRecipes,
+  createPlannedMeal,
+  getPlannedMeals,
+  deletePlannedMeal,
+  updatePlannedMeal,
+  getSnacks,
+} from "../services/api";
 import PlanningPopup from "../components/meals/PlanningPopup";
 import MealPopup from "../components/meals/MealPopup";
 
@@ -11,10 +18,12 @@ const PlanningPage: React.FC = () => {
   const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedWeek, setSelectedWeek] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [showPlanningPopup, setShowPlanningPopup] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
+  const [selectedMealType, setSelectedMealType] = useState<MealType | null>(
+    null,
+  );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showMealPopup, setShowMealPopup] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<PlannedMeal | null>(null);
@@ -40,7 +49,7 @@ const PlanningPage: React.FC = () => {
           getSnacks(),
           getPlannedMeals(
             startDate.toISOString().split("T")[0],
-            endDate.toISOString().split("T")[0]
+            endDate.toISOString().split("T")[0],
           ),
         ]);
         setRecipes(recipesData);
@@ -58,7 +67,7 @@ const PlanningPage: React.FC = () => {
 
   const handleAddMeal = async (itemId: number, isSnack: boolean) => {
     if (!selectedMealType || !selectedDate) return;
-    
+
     try {
       const newPlannedMeal = await createPlannedMeal({
         date: selectedDate,
@@ -88,9 +97,11 @@ const PlanningPage: React.FC = () => {
   const handleUpdateServings = async (mealId: number, newServings: number) => {
     try {
       await updatePlannedMeal(mealId, { servings: newServings });
-      setPlannedMeals(plannedMeals.map(meal => 
-        meal.id === mealId ? { ...meal, servings: newServings } : meal
-      ));
+      setPlannedMeals(
+        plannedMeals.map((meal) =>
+          meal.id === mealId ? { ...meal, servings: newServings } : meal,
+        ),
+      );
     } catch (error) {
       console.error("Failed to update servings", error);
     }
@@ -98,20 +109,32 @@ const PlanningPage: React.FC = () => {
 
   const getMealsForDateAndType = (date: string, mealType: MealType) => {
     return plannedMeals.filter(
-      (meal) => meal.date === date && meal.meal_type === mealType
+      (meal) => meal.date === date && meal.meal_type === mealType,
     );
   };
 
-  const renderMealSection = (date: string, mealType: MealType, title: string, key: string) => {
+  const renderMealSection = (
+    date: string,
+    mealType: MealType,
+    title: string,
+    key: string,
+  ) => {
     const meals = getMealsForDateAndType(date, mealType);
     return (
-      <div key={key} className="h-[120px] border-b border-r border-gray-200 last:border-b-0">
+      <div
+        key={key}
+        className="h-[120px] border-b border-r border-gray-200 last:border-b-0"
+      >
         <div className="h-full overflow-y-auto scrollbar-hide">
           {meals.map((meal) => {
-            const recipe = meal.recipe_id ? recipes.find((r) => r.id === meal.recipe_id) : null;
-            const snack = meal.snack_id ? snacks.find((s) => s.id === meal.snack_id) : null;
+            const recipe = meal.recipe_id
+              ? recipes.find((r) => r.id === meal.recipe_id)
+              : null;
+            const snack = meal.snack_id
+              ? snacks.find((s) => s.id === meal.snack_id)
+              : null;
             const item = recipe || snack;
-            
+
             return (
               <div
                 key={meal.id}
@@ -122,9 +145,14 @@ const PlanningPage: React.FC = () => {
                 }}
               >
                 <div className="flex flex-col">
-                  <span className="truncate text-sm font-medium">{item?.name}</span>
+                  <span className="truncate text-sm font-medium">
+                    {item?.name}
+                  </span>
                   <span className="text-xs text-gray-600">
-                    {item?.calories_per_serving ? item.calories_per_serving * meal.servings : 0} cal
+                    {item?.calories_per_serving
+                      ? item.calories_per_serving * meal.servings
+                      : 0}{" "}
+                    cal
                   </span>
                 </div>
               </div>
@@ -146,11 +174,14 @@ const PlanningPage: React.FC = () => {
           <MealPopup
             recipeName={
               selectedMeal.recipe_id
-                ? recipes.find(r => r.id === selectedMeal.recipe_id)?.name || ''
-                : snacks.find(s => s.id === selectedMeal.snack_id)?.name || ''
+                ? recipes.find((r) => r.id === selectedMeal.recipe_id)?.name ||
+                  ""
+                : snacks.find((s) => s.id === selectedMeal.snack_id)?.name || ""
             }
             currentServings={selectedMeal.servings}
-            onUpdateServings={(servings: number) => handleUpdateServings(selectedMeal.id, servings)}
+            onUpdateServings={(servings: number) =>
+              handleUpdateServings(selectedMeal.id, servings)
+            }
             onUnplan={() => {
               handleDeleteMeal(selectedMeal.id);
               setShowMealPopup(false);
@@ -162,22 +193,6 @@ const PlanningPage: React.FC = () => {
             }}
           />
         )}
-      </div>
-    );
-  };
-
-  const renderDayColumn = (date: string, dayName: string, isFirstDay: boolean = false) => {
-    return (
-      <div className="flex-1 min-w-0 border-r border-gray-300 last:border-r-0">
-        <div className="bg-indigo-600 text-white p-2 text-center font-medium">
-          {dayName}
-        </div>
-        <div className="bg-gray-50">
-          {renderMealSection(date, MealType.BREAKFAST, "Breakfast", `${date}-breakfast`)}
-          {renderMealSection(date, MealType.LUNCH, "Lunch", `${date}-lunch`)}
-          {renderMealSection(date, MealType.DINNER, "Dinner", `${date}-dinner`)}
-          {renderMealSection(date, MealType.SNACK, "Snacks", `${date}-snack`)}
-        </div>
       </div>
     );
   };
@@ -198,30 +213,29 @@ const PlanningPage: React.FC = () => {
 
   // Add this helper function before getAverageCaloriesForMealType
   const getCaloriesForMeal = (meal: PlannedMeal) => {
-    const recipe = meal.recipe_id ? recipes.find(r => r.id === meal.recipe_id) : null;
-    const snack = meal.snack_id ? snacks.find(s => s.id === meal.snack_id) : null;
+    const recipe = meal.recipe_id
+      ? recipes.find((r) => r.id === meal.recipe_id)
+      : null;
+    const snack = meal.snack_id
+      ? snacks.find((s) => s.id === meal.snack_id)
+      : null;
     const item = recipe || snack;
     return item ? item.calories_per_serving * meal.servings : 0;
   };
 
   // Update the average calories calculation
   const getAverageCaloriesForMealType = (mealType: MealType) => {
-    const mealsOfType = plannedMeals.filter(meal => meal.meal_type === mealType);
+    const mealsOfType = plannedMeals.filter(
+      (meal) => meal.meal_type === mealType,
+    );
     if (mealsOfType.length === 0) return 0;
-    
+
     const totalCalories = mealsOfType.reduce((sum, meal) => {
       return sum + getCaloriesForMeal(meal);
     }, 0);
-    
+
     // Average over 7 days (number of meal slots) rather than number of items
     return Math.round(totalCalories / 7);
-  };
-
-  // Add a function to get total calories for a meal type
-  const getTotalCaloriesForMealType = (mealType: MealType) => {
-    return plannedMeals
-      .filter(meal => meal.meal_type === mealType)
-      .reduce((sum, meal) => sum + getCaloriesForMeal(meal), 0);
   };
 
   // Add this helper function near the other helper functions
@@ -240,12 +254,23 @@ const PlanningPage: React.FC = () => {
             <div className="flex items-center space-x-2">
               {!isCurrentWeek(selectedWeek) && (
                 <button
-                  onClick={() => setSelectedWeek(new Date().toISOString().split("T")[0])}
+                  onClick={() =>
+                    setSelectedWeek(new Date().toISOString().split("T")[0])
+                  }
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
                   title="Go to current week"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               )}
@@ -260,9 +285,9 @@ const PlanningPage: React.FC = () => {
                 ←
               </button>
               <span className="text-gray-600 font-medium">
-                {(() => {
+                {((): string => {
                   const { startDate, endDate } = getWeekDates(selectedWeek);
-                  return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                  return `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
                 })()}
               </span>
               <button
@@ -289,9 +314,12 @@ const PlanningPage: React.FC = () => {
                     { type: MealType.BREAKFAST, label: "Breakfast" },
                     { type: MealType.LUNCH, label: "Lunch" },
                     { type: MealType.DINNER, label: "Dinner" },
-                    { type: MealType.SNACK, label: "Snacks" }
+                    { type: MealType.SNACK, label: "Snacks" },
                   ].map(({ type, label }, index) => (
-                    <div key={type} className={`h-[120px] p-4 ${index !== 3 ? 'border-b border-gray-300' : ''}`}>
+                    <div
+                      key={type}
+                      className={`h-[120px] p-4 ${index !== 3 ? "border-b border-gray-300" : ""}`}
+                    >
                       <div className="font-medium text-indigo-600">{label}</div>
                       <div className="text-sm text-gray-600">
                         Avg: {getAverageCaloriesForMealType(type)} cal
@@ -304,21 +332,34 @@ const PlanningPage: React.FC = () => {
               {/* Main Planning Table */}
               <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden">
                 <div className="grid grid-cols-7">
-                  {getWeekDays(selectedWeek).map(day => (
-                    <div key={day.date} className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0">
+                  {getWeekDays(selectedWeek).map((day) => (
+                    <div
+                      key={day.date}
+                      className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0"
+                    >
                       {day.name}
                     </div>
                   ))}
-                  {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((mealType, mealIndex) => (
+                  {[
+                    MealType.BREAKFAST,
+                    MealType.LUNCH,
+                    MealType.DINNER,
+                    MealType.SNACK,
+                  ].map((mealType, mealIndex) =>
                     getWeekDays(selectedWeek).map((day, dayIndex) => (
-                      <div 
-                        key={`${day.date}-${mealType}`} 
-                        className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? 'border-b border-gray-300' : ''}`}
+                      <div
+                        key={`${day.date}-${mealType}`}
+                        className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? "border-b border-gray-300" : ""}`}
                       >
-                        {renderMealSection(day.date, mealType, "", `${day.date}-${mealType}`)}
+                        {renderMealSection(
+                          day.date,
+                          mealType,
+                          "",
+                          `${day.date}-${mealType}`,
+                        )}
                       </div>
-                    ))
-                  ))}
+                    )),
+                  )}
                 </div>
               </div>
             </div>
@@ -342,4 +383,5 @@ const PlanningPage: React.FC = () => {
   );
 };
 
-export default PlanningPage; 
+export default PlanningPage;
+
