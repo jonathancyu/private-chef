@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Ingredient } from "../../types/api.types";
 import { createIngredient } from "../../services/api";
 
@@ -22,6 +22,13 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
     carbs_per_unit: 0,
     fat_per_unit: 0,
   });
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isCreatingNew && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isCreatingNew]);
 
   const handleCreateIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +83,7 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
                 Name
               </label>
               <input
+                ref={nameInputRef}
                 type="text"
                 value={newIngredient.name}
                 onChange={(e) =>

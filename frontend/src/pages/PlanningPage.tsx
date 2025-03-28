@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import { Recipe, MealType, PlannedMeal } from "../types/api.types";
 import { getRecipes, createPlannedMeal, getPlannedMeals } from "../services/api";
+import RecipePopup from "../components/meals/RecipePopup";
 
 const PlanningPage: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -10,6 +11,8 @@ const PlanningPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
+  const [showRecipePopup, setShowRecipePopup] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,15 +34,19 @@ const PlanningPage: React.FC = () => {
     loadData();
   }, [selectedDate]);
 
-  const handleAddMeal = async (recipeId: number, mealType: MealType) => {
+  const handleAddMeal = async (recipeId: number) => {
+    if (!selectedMealType) return;
+    
     try {
       const newPlannedMeal = await createPlannedMeal({
         date: selectedDate,
-        meal_type: mealType,
+        meal_type: selectedMealType,
         recipe_id: recipeId,
         servings: 1,
       });
       setPlannedMeals([...plannedMeals, newPlannedMeal]);
+      setShowRecipePopup(false);
+      setSelectedMealType(null);
     } catch (error) {
       console.error("Failed to add planned meal", error);
     }
@@ -75,7 +82,10 @@ const PlanningPage: React.FC = () => {
             );
           })}
           <button
-            onClick={() => handleAddMeal(recipes[0]?.id || 0, mealType)}
+            onClick={() => {
+              setSelectedMealType(mealType);
+              setShowRecipePopup(true);
+            }}
             className="w-full bg-indigo-50 text-indigo-700 px-3 py-2 rounded hover:bg-indigo-100 text-sm"
           >
             + Add {title}
@@ -110,6 +120,17 @@ const PlanningPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {showRecipePopup && (
+          <RecipePopup
+            availableRecipes={recipes}
+            onSelectRecipe={handleAddMeal}
+            onClose={() => {
+              setShowRecipePopup(false);
+              setSelectedMealType(null);
+            }}
+          />
+        )}
       </div>
     </Layout>
   );
