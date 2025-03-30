@@ -12,17 +12,25 @@ interface PlannedRecipesSectionProps {
   plannedRecipes: PlannedRecipe[];
   onDragStart: (e: React.DragEvent, recipe: PlannedRecipe) => void;
   onDelete: (id: number) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
 }
 
 const PlannedRecipesSection: React.FC<PlannedRecipesSectionProps> = ({
   plannedRecipes,
   onDragStart,
   onDelete,
+  onDrop,
+  onDragOver,
 }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h3 className="text-lg font-semibold mb-4">Planned to Cook</h3>
-      <div className="space-y-2">
+      <div 
+        className="space-y-2 min-h-[200px] border-2 border-dashed border-gray-300 rounded-lg p-4"
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+      >
         {plannedRecipes.map((plannedRecipe) => (
           <div
             key={plannedRecipe.id}
@@ -59,7 +67,7 @@ const PlannedRecipesSection: React.FC<PlannedRecipesSectionProps> = ({
         ))}
         {plannedRecipes.length === 0 && (
           <div className="text-center text-gray-500 py-4">
-            No recipes planned to cook
+            Drag meals here to plan cooking
           </div>
         )}
       </div>

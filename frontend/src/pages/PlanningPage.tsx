@@ -96,7 +96,17 @@ const PlanningPage: React.FC = () => {
   };
 
   const handleDragStart = (e: React.DragEvent, plannedRecipe: PlannedRecipe) => {
-    e.dataTransfer.setData("text/plain", JSON.stringify(plannedRecipe));
+    e.dataTransfer.setData("text/plain", JSON.stringify({
+      type: 'planned_recipe',
+      data: plannedRecipe
+    }));
+  };
+
+  const handleMealDragStart = (e: React.DragEvent, meal: PlannedMeal) => {
+    e.dataTransfer.setData("text/plain", JSON.stringify({
+      type: 'planned_meal',
+      data: meal
+    }));
   };
 
   const handleDrop = async (e: React.DragEvent, date: string, mealType: MealType) => {
@@ -105,31 +115,93 @@ const PlanningPage: React.FC = () => {
     if (!data) return;
 
     try {
-      const plannedRecipe: PlannedRecipe = JSON.parse(data);
-      const newPlannedMeal = await createPlannedMeal({
-        date,
-        meal_type: mealType,
-        recipe_id: plannedRecipe.recipe.id,
-        servings: 1, // Each dragged item represents 1 serving
-      });
+      const { type, data: dragData } = JSON.parse(data);
 
-      setPlannedMeals([...plannedMeals, newPlannedMeal]);
-      
-      // Update the planned recipe's servings
-      const updatedPlannedRecipes = plannedRecipes.map((pr) =>
-        pr.id === plannedRecipe.id
-          ? { ...pr, servings: pr.servings - 1 }
-          : pr
-      );
+      if (type === 'planned_recipe') {
+        const plannedRecipe: PlannedRecipe = dragData;
+        const newPlannedMeal = await createPlannedMeal({
+          date,
+          meal_type: mealType,
+          recipe_id: plannedRecipe.recipe.id,
+          servings: 1, // Each dragged item represents 1 serving
+        });
 
-      // Remove the planned recipe if no servings left
-      const finalPlannedRecipes = updatedPlannedRecipes.filter(
-        (pr) => pr.servings > 0
-      );
+        setPlannedMeals([...plannedMeals, newPlannedMeal]);
+        
+        // Update the planned recipe's servings
+        const updatedPlannedRecipes = plannedRecipes.map((pr) =>
+          pr.id === plannedRecipe.id
+            ? { ...pr, servings: pr.servings - 1 }
+            : pr
+        );
 
-      setPlannedRecipes(finalPlannedRecipes);
+        // Remove the planned recipe if no servings left
+        const finalPlannedRecipes = updatedPlannedRecipes.filter(
+          (pr) => pr.servings > 0
+        );
+
+        setPlannedRecipes(finalPlannedRecipes);
+      } else if (type === 'planned_meal') {
+        const meal: PlannedMeal = dragData;
+        await updatePlannedMeal(meal.id, {
+          date,
+          meal_type: mealType,
+        });
+
+        setPlannedMeals(plannedMeals.map(m => 
+          m.id === meal.id 
+            ? { ...m, date, meal_type: mealType }
+            : m
+        ));
+      }
     } catch (error) {
-      console.error("Failed to add planned meal", error);
+      console.error("Failed to update meal", error);
+    }
+  };
+
+  const handlePlannedRecipesDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData("text/plain");
+    if (!data) return;
+
+    try {
+      const { type, data: dragData } = JSON.parse(data);
+
+      if (type === 'planned_meal') {
+        const meal: PlannedMeal = dragData;
+        await deletePlannedMeal(meal.id);
+        
+        // Find the recipe and add it back to planned recipes
+        const recipe = recipes.find(r => r.id === meal.recipe_id);
+        if (recipe) {
+          const existingPlannedRecipe = plannedRecipes.find(
+            pr => pr.recipe.id === recipe.id
+          );
+
+          if (existingPlannedRecipe) {
+            // Update existing planned recipe
+            setPlannedRecipes(plannedRecipes.map(pr =>
+              pr.id === existingPlannedRecipe.id
+                ? { ...pr, servings: pr.servings + 1 }
+                : pr
+            ));
+          } else {
+            // Create new planned recipe
+            const newPlannedRecipe: PlannedRecipe = {
+              id: nextPlannedRecipeId,
+              recipe,
+              amount: 1,
+              servings: 1,
+            };
+            setPlannedRecipes([...plannedRecipes, newPlannedRecipe]);
+            setNextPlannedRecipeId(nextPlannedRecipeId + 1);
+          }
+        }
+
+        setPlannedMeals(plannedMeals.filter(m => m.id !== meal.id));
+      }
+    } catch (error) {
+      console.error("Failed to move meal back to planned recipes", error);
     }
   };
 
@@ -212,7 +284,9 @@ const PlanningPage: React.FC = () => {
             return (
               <div
                 key={meal.id}
-                className="h-12 bg-white mb-1 px-2 py-1.5 flex justify-between items-start shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                draggable
+                onDragStart={(e) => handleMealDragStart(e, meal)}
+                className="h-12 bg-white mb-1 px-2 py-1.5 flex justify-between items-start shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-move"
                 onClick={() => {
                   setSelectedMeal(meal);
                   setShowMealPopup(true);
@@ -394,6 +468,8 @@ const PlanningPage: React.FC = () => {
                   plannedRecipes={plannedRecipes}
                   onDragStart={handleDragStart}
                   onDelete={handleDeletePlannedRecipe}
+                  onDrop={handlePlannedRecipesDrop}
+                  onDragOver={handleDragOver}
                 />
               </div>
               <div className="lg:col-span-3">
