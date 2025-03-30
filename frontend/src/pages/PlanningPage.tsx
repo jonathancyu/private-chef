@@ -513,35 +513,39 @@ const PlanningPage: React.FC = () => {
 
                   {/* Main Planning Table */}
                   <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-7">
-                      {getWeekDays(selectedWeek).map((day) => (
-                        <div
-                          key={day.date}
-                          className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0"
-                        >
-                          {day.name}
+                    <div className="overflow-x-auto">
+                      <div className="min-w-[800px]">
+                        <div className="grid grid-cols-7">
+                          {getWeekDays(selectedWeek).map((day) => (
+                            <div
+                              key={day.date}
+                              className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0"
+                            >
+                              {day.name}
+                            </div>
+                          ))}
+                          {[
+                            MealType.BREAKFAST,
+                            MealType.LUNCH,
+                            MealType.DINNER,
+                            MealType.SNACK,
+                          ].map((mealType, mealIndex) =>
+                            getWeekDays(selectedWeek).map((day, dayIndex) => (
+                              <div
+                                key={`${day.date}-${mealType}`}
+                                className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? "border-b border-gray-300" : ""}`}
+                              >
+                                {renderMealSection(
+                                  day.date,
+                                  mealType,
+                                  "",
+                                  `${day.date}-${mealType}`,
+                                )}
+                              </div>
+                            )),
+                          )}
                         </div>
-                      ))}
-                      {[
-                        MealType.BREAKFAST,
-                        MealType.LUNCH,
-                        MealType.DINNER,
-                        MealType.SNACK,
-                      ].map((mealType, mealIndex) =>
-                        getWeekDays(selectedWeek).map((day, dayIndex) => (
-                          <div
-                            key={`${day.date}-${mealType}`}
-                            className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? "border-b border-gray-300" : ""}`}
-                          >
-                            {renderMealSection(
-                              day.date,
-                              mealType,
-                              "",
-                              `${day.date}-${mealType}`,
-                            )}
-                          </div>
-                        )),
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
