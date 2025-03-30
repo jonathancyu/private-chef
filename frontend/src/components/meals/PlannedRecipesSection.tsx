@@ -1,5 +1,5 @@
 import React from "react";
-import { Recipe } from "../../types/api.types";
+import { Recipe, Snack } from "../../types/api.types";
 
 interface PlannedRecipe {
   id: number;
@@ -8,24 +8,40 @@ interface PlannedRecipe {
   servings: number;
 }
 
-interface PlannedRecipesSectionProps {
+interface PlannedSnack {
+  id: number;
+  snack: Snack;
+  amount: number;
+}
+
+interface ShoppingListSectionProps {
   plannedRecipes: PlannedRecipe[];
   onDragStart: (e: React.DragEvent, recipe: PlannedRecipe) => void;
   onDelete: (id: number) => void;
   onDrop: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
+  onAddClick: () => void;
 }
 
-const PlannedRecipesSection: React.FC<PlannedRecipesSectionProps> = ({
+const ShoppingListSection: React.FC<ShoppingListSectionProps> = ({
   plannedRecipes,
   onDragStart,
   onDelete,
   onDrop,
   onDragOver,
+  onAddClick,
 }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold mb-4">Planned to Cook</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Shopping List</h3>
+        <button
+          onClick={onAddClick}
+          className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
+          Add Item
+        </button>
+      </div>
       <div 
         className="space-y-2 min-h-[200px] border-2 border-dashed border-gray-300 rounded-lg p-4"
         onDrop={onDrop}
@@ -67,7 +83,7 @@ const PlannedRecipesSection: React.FC<PlannedRecipesSectionProps> = ({
         ))}
         {plannedRecipes.length === 0 && (
           <div className="text-center text-gray-500 py-4">
-            Drag meals here to plan cooking
+            Drag meals here to add to shopping list
           </div>
         )}
       </div>
@@ -75,4 +91,4 @@ const PlannedRecipesSection: React.FC<PlannedRecipesSectionProps> = ({
   );
 };
 
-export default PlannedRecipesSection; 
+export default ShoppingListSection; 

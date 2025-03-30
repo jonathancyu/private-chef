@@ -12,7 +12,7 @@ import {
 import PlanningPopup from "../components/meals/PlanningPopup";
 import MealPopup from "../components/meals/MealPopup";
 import RecipePlanningPopup from "../components/meals/RecipePlanningPopup";
-import PlannedRecipesSection from "../components/meals/PlannedRecipesSection";
+import ShoppingListSection from "../components/meals/PlannedRecipesSection";
 
 interface PlannedRecipe {
   id: number;
@@ -210,22 +210,46 @@ const PlanningPage: React.FC = () => {
   };
 
   const handleAddMeal = async (itemId: number, isSnack: boolean) => {
-    if (!selectedMealType || !selectedDate) return;
-
     try {
-      const newPlannedMeal = await createPlannedMeal({
-        date: selectedDate,
-        meal_type: selectedMealType,
-        recipe_id: isSnack ? undefined : itemId,
-        snack_id: isSnack ? itemId : undefined,
-        servings: 1,
-      });
-      setPlannedMeals([...plannedMeals, newPlannedMeal]);
+      if (isSnack) {
+        const snack = snacks.find(s => s.id === itemId);
+        if (!snack) return;
+
+        const newPlannedSnack: PlannedRecipe = {
+          id: nextPlannedRecipeId,
+          recipe: {
+            id: snack.id,
+            name: snack.name,
+            servings: 1,
+            calories_per_serving: snack.calories_per_serving,
+            protein_per_serving: snack.protein_per_serving,
+            carbs_per_serving: snack.carbs_per_serving,
+            fat_per_serving: snack.fat_per_serving,
+            instructions: "",
+            ingredients: [],
+          },
+          amount: 1,
+          servings: 1,
+        };
+
+        setPlannedRecipes([...plannedRecipes, newPlannedSnack]);
+      } else {
+        const recipe = recipes.find(r => r.id === itemId);
+        if (!recipe) return;
+
+        const newPlannedRecipe: PlannedRecipe = {
+          id: nextPlannedRecipeId,
+          recipe,
+          amount: 1,
+          servings: recipe.servings,
+        };
+
+        setPlannedRecipes([...plannedRecipes, newPlannedRecipe]);
+      }
+      setNextPlannedRecipeId(nextPlannedRecipeId + 1);
       setShowPlanningPopup(false);
-      setSelectedMealType(null);
-      setSelectedDate(null);
     } catch (error) {
-      console.error("Failed to add planned meal", error);
+      console.error("Failed to add item to shopping list", error);
     }
   };
 
@@ -306,16 +330,6 @@ const PlanningPage: React.FC = () => {
               </div>
             );
           })}
-          <button
-            className="w-full h-8 bg-gray-50 mb-1 px-2 py-0.5 flex items-center justify-center text-gray-500 hover:text-gray-700 text-xs hover:bg-gray-100 hover:border-gray-300 transition-colors cursor-pointer"
-            onClick={() => {
-              setSelectedDate(date);
-              setSelectedMealType(mealType);
-              setShowPlanningPopup(true);
-            }}
-          >
-            + Add
-          </button>
         </div>
 
         {showMealPopup && selectedMeal && (
@@ -464,12 +478,13 @@ const PlanningPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               <div className="lg:col-span-1">
-                <PlannedRecipesSection
+                <ShoppingListSection
                   plannedRecipes={plannedRecipes}
                   onDragStart={handleDragStart}
                   onDelete={handleDeletePlannedRecipe}
                   onDrop={handlePlannedRecipesDrop}
                   onDragOver={handleDragOver}
+                  onAddClick={() => setShowPlanningPopup(true)}
                 />
               </div>
               <div className="lg:col-span-3">
