@@ -11,22 +11,32 @@ import {
 } from "../services/api";
 import PlanningPopup from "../components/meals/PlanningPopup";
 import MealPopup from "../components/meals/MealPopup";
+import RecipePlanningPopup from "../components/meals/RecipePlanningPopup";
+import PlannedRecipesSection from "../components/meals/PlannedRecipesSection";
+
+interface PlannedRecipe {
+  id: number;
+  recipe: Recipe;
+  amount: number;
+  servings: number;
+}
 
 const PlanningPage: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [snacks, setSnacks] = useState<Snack[]>([]);
   const [plannedMeals, setPlannedMeals] = useState<PlannedMeal[]>([]);
+  const [plannedRecipes, setPlannedRecipes] = useState<PlannedRecipe[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedWeek, setSelectedWeek] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
   const [showPlanningPopup, setShowPlanningPopup] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState<MealType | null>(
-    null,
-  );
+  const [showRecipePlanningPopup, setShowRecipePlanningPopup] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState<MealType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showMealPopup, setShowMealPopup] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<PlannedMeal | null>(null);
+  const [nextPlannedRecipeId, setNextPlannedRecipeId] = useState(1);
 
   // Get the start and end dates for the selected week
   const getWeekDates = (dateString: string) => {
@@ -64,6 +74,68 @@ const PlanningPage: React.FC = () => {
 
     loadData();
   }, [selectedWeek]);
+
+  const handlePlanRecipe = (recipeId: number, amount: number) => {
+    const recipe = recipes.find((r) => r.id === recipeId);
+    if (!recipe) return;
+
+    const newPlannedRecipe: PlannedRecipe = {
+      id: nextPlannedRecipeId,
+      recipe,
+      amount,
+      servings: recipe.servings * amount,
+    };
+
+    setPlannedRecipes([...plannedRecipes, newPlannedRecipe]);
+    setNextPlannedRecipeId(nextPlannedRecipeId + 1);
+    setShowRecipePlanningPopup(false);
+  };
+
+  const handleDeletePlannedRecipe = (id: number) => {
+    setPlannedRecipes(plannedRecipes.filter((pr) => pr.id !== id));
+  };
+
+  const handleDragStart = (e: React.DragEvent, plannedRecipe: PlannedRecipe) => {
+    e.dataTransfer.setData("text/plain", JSON.stringify(plannedRecipe));
+  };
+
+  const handleDrop = async (e: React.DragEvent, date: string, mealType: MealType) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData("text/plain");
+    if (!data) return;
+
+    try {
+      const plannedRecipe: PlannedRecipe = JSON.parse(data);
+      const newPlannedMeal = await createPlannedMeal({
+        date,
+        meal_type: mealType,
+        recipe_id: plannedRecipe.recipe.id,
+        servings: 1, // Each dragged item represents 1 serving
+      });
+
+      setPlannedMeals([...plannedMeals, newPlannedMeal]);
+      
+      // Update the planned recipe's servings
+      const updatedPlannedRecipes = plannedRecipes.map((pr) =>
+        pr.id === plannedRecipe.id
+          ? { ...pr, servings: pr.servings - 1 }
+          : pr
+      );
+
+      // Remove the planned recipe if no servings left
+      const finalPlannedRecipes = updatedPlannedRecipes.filter(
+        (pr) => pr.servings > 0
+      );
+
+      setPlannedRecipes(finalPlannedRecipes);
+    } catch (error) {
+      console.error("Failed to add planned meal", error);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
 
   const handleAddMeal = async (itemId: number, isSnack: boolean) => {
     if (!selectedMealType || !selectedDate) return;
@@ -124,6 +196,8 @@ const PlanningPage: React.FC = () => {
       <div
         key={key}
         className="h-[120px] border-b border-r border-gray-200 last:border-b-0"
+        onDrop={(e) => handleDrop(e, date, mealType)}
+        onDragOver={handleDragOver}
       >
         <div className="h-full overflow-y-auto scrollbar-hide">
           {meals.map((meal) => {
@@ -251,115 +325,134 @@ const PlanningPage: React.FC = () => {
         <div className="bg-white p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Meal Planning</h2>
-            <div className="flex items-center space-x-2">
-              {!isCurrentWeek(selectedWeek) && (
-                <button
-                  onClick={() =>
-                    setSelectedWeek(new Date().toISOString().split("T")[0])
-                  }
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                  title="Go to current week"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowRecipePlanningPopup(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Plan Recipe
+              </button>
+              <div className="flex items-center space-x-2">
+                {!isCurrentWeek(selectedWeek) && (
+                  <button
+                    onClick={() =>
+                      setSelectedWeek(new Date().toISOString().split("T")[0])
+                    }
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                    title="Go to current week"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const date = new Date(selectedWeek);
+                    date.setDate(date.getDate() - 7);
+                    setSelectedWeek(date.toISOString().split("T")[0]);
+                  }}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                >
+                  ←
                 </button>
-              )}
-              <button
-                onClick={() => {
-                  const date = new Date(selectedWeek);
-                  date.setDate(date.getDate() - 7);
-                  setSelectedWeek(date.toISOString().split("T")[0]);
-                }}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-              >
-                ←
-              </button>
-              <span className="text-gray-600 font-medium">
-                {((): string => {
-                  const { startDate, endDate } = getWeekDates(selectedWeek);
-                  return `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-                })()}
-              </span>
-              <button
-                onClick={() => {
-                  const date = new Date(selectedWeek);
-                  date.setDate(date.getDate() + 7);
-                  setSelectedWeek(date.toISOString().split("T")[0]);
-                }}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-              >
-                →
-              </button>
+                <span className="text-gray-600 font-medium">
+                  {((): string => {
+                    const { startDate, endDate } = getWeekDates(selectedWeek);
+                    return `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+                  })()}
+                </span>
+                <button
+                  onClick={() => {
+                    const date = new Date(selectedWeek);
+                    date.setDate(date.getDate() + 7);
+                    setSelectedWeek(date.toISOString().split("T")[0]);
+                  }}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                >
+                  →
+                </button>
+              </div>
             </div>
           </div>
 
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <div className="relative flex gap-4">
-              {/* Meal Types Table */}
-              <div className="w-[100px] border border-gray-300 rounded-lg mt-[41px] overflow-hidden">
-                <div className="bg-gray-50">
-                  {[
-                    { type: MealType.BREAKFAST, label: "Breakfast" },
-                    { type: MealType.LUNCH, label: "Lunch" },
-                    { type: MealType.DINNER, label: "Dinner" },
-                    { type: MealType.SNACK, label: "Snacks" },
-                  ].map(({ type, label }, index) => (
-                    <div
-                      key={type}
-                      className={`h-[120px] p-4 ${index !== 3 ? "border-b border-gray-300" : ""}`}
-                    >
-                      <div className="font-medium text-indigo-600">{label}</div>
-                      <div className="text-sm text-gray-600">
-                        Avg: {getAverageCaloriesForMealType(type)} cal
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="lg:col-span-1">
+                <PlannedRecipesSection
+                  plannedRecipes={plannedRecipes}
+                  onDragStart={handleDragStart}
+                  onDelete={handleDeletePlannedRecipe}
+                />
               </div>
-
-              {/* Main Planning Table */}
-              <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden">
-                <div className="grid grid-cols-7">
-                  {getWeekDays(selectedWeek).map((day) => (
-                    <div
-                      key={day.date}
-                      className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0"
-                    >
-                      {day.name}
+              <div className="lg:col-span-3">
+                <div className="relative flex gap-4">
+                  {/* Meal Types Table */}
+                  <div className="w-[100px] border border-gray-300 rounded-lg mt-[41px] overflow-hidden">
+                    <div className="bg-gray-50">
+                      {[
+                        { type: MealType.BREAKFAST, label: "Breakfast" },
+                        { type: MealType.LUNCH, label: "Lunch" },
+                        { type: MealType.DINNER, label: "Dinner" },
+                        { type: MealType.SNACK, label: "Snacks" },
+                      ].map(({ type, label }, index) => (
+                        <div
+                          key={type}
+                          className={`h-[120px] p-4 ${index !== 3 ? "border-b border-gray-300" : ""}`}
+                        >
+                          <div className="font-medium text-indigo-600">{label}</div>
+                          <div className="text-sm text-gray-600">
+                            Avg: {getAverageCaloriesForMealType(type)} cal
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {[
-                    MealType.BREAKFAST,
-                    MealType.LUNCH,
-                    MealType.DINNER,
-                    MealType.SNACK,
-                  ].map((mealType, mealIndex) =>
-                    getWeekDays(selectedWeek).map((day, dayIndex) => (
-                      <div
-                        key={`${day.date}-${mealType}`}
-                        className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? "border-b border-gray-300" : ""}`}
-                      >
-                        {renderMealSection(
-                          day.date,
-                          mealType,
-                          "",
-                          `${day.date}-${mealType}`,
-                        )}
-                      </div>
-                    )),
-                  )}
+                  </div>
+
+                  {/* Main Planning Table */}
+                  <div className="flex-1 border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-7">
+                      {getWeekDays(selectedWeek).map((day) => (
+                        <div
+                          key={day.date}
+                          className="bg-indigo-600 text-white p-2 text-center font-medium border-r last:border-r-0"
+                        >
+                          {day.name}
+                        </div>
+                      ))}
+                      {[
+                        MealType.BREAKFAST,
+                        MealType.LUNCH,
+                        MealType.DINNER,
+                        MealType.SNACK,
+                      ].map((mealType, mealIndex) =>
+                        getWeekDays(selectedWeek).map((day, dayIndex) => (
+                          <div
+                            key={`${day.date}-${mealType}`}
+                            className={`bg-gray-50 border-r last:border-r-0 ${mealIndex !== 3 ? "border-b border-gray-300" : ""}`}
+                          >
+                            {renderMealSection(
+                              day.date,
+                              mealType,
+                              "",
+                              `${day.date}-${mealType}`,
+                            )}
+                          </div>
+                        )),
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -376,6 +469,14 @@ const PlanningPage: React.FC = () => {
               setSelectedMealType(null);
               setSelectedDate(null);
             }}
+          />
+        )}
+
+        {showRecipePlanningPopup && (
+          <RecipePlanningPopup
+            availableRecipes={recipes}
+            onSelect={handlePlanRecipe}
+            onClose={() => setShowRecipePlanningPopup(false)}
           />
         )}
       </div>
