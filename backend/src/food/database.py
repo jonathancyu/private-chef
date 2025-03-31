@@ -1,0 +1,93 @@
+from typing import List, Optional
+from sqlalchemy import Boolean, Enum, Integer, Float, String
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    relationship,
+)
+
+from src.food.constants import FoodState, MealType
+from src.config import settings
+from sqlalchemy import create_engine
+
+engine = create_engine(settings.DATABASE_URL)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+# SQLAlchemy models
+class Food(Base):
+    """
+    A (potentially) edible food item.
+    This can be a cooked meal, or a snack, or a raw ingredient for a recipe.
+    If it is a cooked meal, the recipe field will be present.
+    Appears in the inventory box. Can be dragged onto the calendar to be planned.
+    """
+
+    __tablename__ = "food"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    source_recipe: Mapped[Optional["Recipe"]] = relationship("Recipe")
+
+    serving_size: Mapped[Float] = mapped_column(Float)
+    serving_size_unit: Mapped[str] = mapped_column(String)
+    calories: Mapped[int] = mapped_column(Integer)
+    fat: Mapped[int] = mapped_column(Integer)
+    protein: Mapped[int] = mapped_column(Integer)
+    carbohydrates: Mapped[int] = mapped_column(Integer)
+
+
+class Recipe(Base):
+    """
+    A recipe for a meal. This is edited via the user's recipe collection
+    :param override_nutrition: If this is present, we will not try to calculate the recipe's nutrition.
+      instead, we will use nutrition for the
+    """
+
+    __tablename__ = "recipe"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ingredients: Mapped[List[Food]] = relationship(
+        "ingredient", back_populates="recipe"
+    )
+    override_nutrition: Mapped[bool] = mapped_column(Boolean)
+
+
+class Ingredient(Base):
+    """Component of a Recipe."""
+
+    __tablename__ = "ingredient"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    food: Mapped[Food] = relationship(
+        "Food"
+    )  # Food containing nutrition for this ingredient
+    recipe: Mapped[Recipe] = relationship(
+        "Recipe", back_populates="ingredients"
+    )  # Recipe this ingredient is part of
+
+    name: Mapped[str] = mapped_column(String)
+    quantity: Mapped[Float] = mapped_column(Float)
+    unit: Mapped[str] = mapped_column(String)
+
+
+class PlannedFood(Base):
+    __tablename__ = "planned_food"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    meal: Mapped[MealType] = mapped_column(Enum(MealType))
+    food: Mapped[Food] = relationship("Food", back_populates="food")
+
+
+class Inventory(Base):
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    state: Mapped[FoodState] = mapped_column(Enum(FoodState), primary_key=True)
+    quantity: Mapped[Float] = mapped_column(Float)
+
+
+# FoodBase.metadata.drop_all(bind=engine, checkfirst=False)
+Base.metadata.create_all(bind=engine, checkfirst=False)
