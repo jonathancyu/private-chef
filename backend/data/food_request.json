@@ -1,0 +1,10 @@
+{
+  "name": "Grilled Chicken Breast",
+  "state": "PLANNED",
+  "serving_size": 100.0,
+  "serving_size_unit": "g",
+  "calories": 165,
+  "fat": 4,
+  "protein": 31,
+  "carbohydrates": 0
+}

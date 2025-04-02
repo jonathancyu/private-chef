@@ -13,7 +13,8 @@ class Nutrition(BaseModel):
 
 
 # Create recipe models
-class CreateRecipeIngredient(Nutrition):
+class IngredientResponse(Nutrition):
+    food_id: int
     name: str
     note: str
     quantity: float
@@ -21,23 +22,33 @@ class CreateRecipeIngredient(Nutrition):
 
 
 class CreateRecipeRequest(Nutrition):
-    ingredients: list[CreateRecipeIngredient]
+    name: str
+    ingredients: list[IngredientResponse]
     override_nutrition: bool
 
 
-class CreateRecipeResponse(Nutrition):
+class RecipeResponse(Nutrition):
     id: int
+    ingredients: list[IngredientResponse]
 
 
-# Add food to inventory
+# Add food to database
 class CreateFoodRequest(Nutrition):
     name: str
     state: Optional[FoodState] = FoodState.PLANNED
+    serving_size: float
+    serving_size_unit: str
     # TODO: if nutrition not present look up from usda
 
 
 class CreateFoodResponse(Nutrition):
     id: int
+
+
+# Add inventory
+class AddInventoryRequest(Nutrition):
+    state: Optional[FoodState] = FoodState.PLANNED
+    food_id: int
 
 
 # Update food in inventory

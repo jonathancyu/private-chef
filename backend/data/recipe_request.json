@@ -1,0 +1,21 @@
+{
+  "name": "My Recipe Name",
+  "ingredients": [
+    {
+      "food_id": 1,
+      "name": "veggie",
+      "note": "a veg",
+      "quantity": 1.5,
+      "unit": "thing",
+      "calories": 50,
+      "fat": 0,
+      "protein": 2,
+      "carbohydrates": 10
+    }
+  ],
+  "override_nutrition": false,
+  "calories": 1,
+  "fat": 1,
+  "protein": 1,
+  "carbohydrates": 1
+}
