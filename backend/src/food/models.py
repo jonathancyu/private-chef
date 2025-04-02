@@ -29,20 +29,35 @@ class CreateRecipeRequest(Nutrition):
 
 class RecipeResponse(Nutrition):
     id: int
+    name: str
     ingredients: list[IngredientResponse]
 
 
 # Add food to database
 class CreateFoodRequest(Nutrition):
     name: str
-    state: Optional[FoodState] = FoodState.PLANNED
     serving_size: float
     serving_size_unit: str
     # TODO: if nutrition not present look up from usda
 
 
-class CreateFoodResponse(Nutrition):
+class FoodResponse(Nutrition):
     id: int
+    name: str
+    serving_size: float
+    serving_size_unit: str
+
+
+class UpdateFoodRequest(BaseModel):
+    id: int
+    name: Optional[str] = None
+    state: Optional[FoodState] = None
+    serving_size: Optional[float] = None
+    serving_size_unit: Optional[str] = None
+    calories: Optional[int] = None
+    fat: Optional[int] = None
+    protein: Optional[int] = None
+    carbohydrates: Optional[int] = None
 
 
 # Add inventory
@@ -56,3 +71,14 @@ class UpdateInventoryRequest(Nutrition):
     food_id: int
     state: FoodState
     quantity: float
+
+
+class UpdateRecipeRequest(BaseModel):
+    id: int
+    name: Optional[str] = None
+    ingredients: Optional[list[IngredientResponse]] = None
+    override_nutrition: Optional[bool] = None
+    calories: Optional[int] = None
+    fat: Optional[int] = None
+    protein: Optional[int] = None
+    carbohydrates: Optional[int] = None

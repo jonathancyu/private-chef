@@ -44,7 +44,7 @@ class Food(Base):
     source_recipe_id: Mapped[Optional[int]] = mapped_column(ForeignKey("recipe.id"))
     source_recipe: Mapped[Optional["Recipe"]] = relationship(back_populates="food")
 
-    serving_size: Mapped[Float] = mapped_column(Float)
+    serving_size: Mapped[float] = mapped_column(Float)
     serving_size_unit: Mapped[str] = mapped_column(String)
     calories: Mapped[int] = mapped_column(Integer)
     fat: Mapped[int] = mapped_column(Integer)
@@ -62,6 +62,7 @@ class Recipe(Base):
     __tablename__ = "recipe"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, primary_key=True)
     food: Mapped[Food] = relationship(back_populates="source_recipe")
     ingredients: Mapped[List["RecipeIngredient"]] = relationship()
     override_nutrition: Mapped[bool] = mapped_column(Boolean)
@@ -75,13 +76,14 @@ class RecipeIngredient(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     food_id: Mapped[int] = mapped_column(ForeignKey("food.id"))
     food: Mapped[Food] = relationship()  # Food containing nutrition for this ingredient
+    note: Mapped[str] = mapped_column(String)
     recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id"))
     recipe: Mapped[Recipe] = relationship(
         back_populates="ingredients"
     )  # Recipe this ingredient is part of
 
     name: Mapped[str] = mapped_column(String)
-    quantity: Mapped[Float] = mapped_column(Float)
+    quantity: Mapped[float] = mapped_column(Float)
     unit: Mapped[str] = mapped_column(String)
 
 
@@ -101,7 +103,7 @@ class Inventory(Base):
     state: Mapped[FoodState] = mapped_column(Enum(FoodState), primary_key=True)
     food_id: Mapped[int] = mapped_column(ForeignKey("food.id"))
     food: Mapped[List[Food]] = relationship()
-    quantity: Mapped[Float] = mapped_column(Float)
+    quantity: Mapped[float] = mapped_column(Float)
 
 
 Base.metadata.drop_all(bind=engine, checkfirst=False)
