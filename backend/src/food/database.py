@@ -1,10 +1,12 @@
-from typing import List, Optional
+from typing import Any, Generator, List, Optional
 from sqlalchemy import Boolean, Enum, Integer, Float, String
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
+    Session,
     mapped_column,
     relationship,
+    sessionmaker,
 )
 
 from src.food.constants import FoodState, MealType
@@ -12,6 +14,14 @@ from src.config import settings
 from sqlalchemy import create_engine
 
 engine = create_engine(settings.DATABASE_URL)
+
+
+def get_db_session() -> Generator[Session, Any, Any]:
+    db = sessionmaker(autocommit=False, autoflush=False, bind=engine)()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 class Base(DeclarativeBase):
@@ -51,10 +61,15 @@ class Recipe(Base):
     __tablename__ = "recipe"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    food: Mapped[Food] = relationship("Food", back_populates="source_recipe")
     ingredients: Mapped[List[Food]] = relationship(
         "ingredient", back_populates="recipe"
     )
     override_nutrition: Mapped[bool] = mapped_column(Boolean)
+    calories: Mapped[int] = mapped_column(Integer)
+    fat: Mapped[int] = mapped_column(Integer)
+    protein: Mapped[int] = mapped_column(Integer)
+    carbohydrates: Mapped[int] = mapped_column(Integer)
 
 
 class Ingredient(Base):
