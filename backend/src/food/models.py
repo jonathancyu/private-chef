@@ -40,6 +40,7 @@ class FoodResponse(Nutrition):
     model_config = ConfigDict(extra="ignore", from_attributes=True)
     id: int
     name: str
+    source_recipe_id: Optional[int] = None
     serving_size: float
     serving_size_unit: str
 

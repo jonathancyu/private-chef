@@ -41,7 +41,9 @@ class Food(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    source_recipe_id: Mapped[Optional[int]] = mapped_column(ForeignKey("recipe.id"))
+    source_recipe_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("recipe.id", ondelete="CASCADE")
+    )
     source_recipe: Mapped[Optional["Recipe"]] = relationship(back_populates="food")
 
     serving_size: Mapped[float] = mapped_column(Float)
@@ -63,7 +65,7 @@ class Recipe(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String)
-    food: Mapped[Food] = relationship(back_populates="source_recipe")
+    food: Mapped[Food] = relationship(back_populates="source_recipe", cascade="all")
     ingredients: Mapped[List["RecipeIngredient"]] = relationship(
         back_populates="recipe", cascade="all, delete-orphan"
     )

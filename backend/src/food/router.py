@@ -24,19 +24,8 @@ router = APIRouter()
 def get_foods(db_session: Session = Depends(get_db_session)) -> List[FoodResponse]:
     """Get all foods."""
     foods = service.get_foods(db_session=db_session)
-    return [
-        FoodResponse(
-            id=food.id,
-            name=food.name,
-            serving_size=food.serving_size,
-            serving_size_unit=food.serving_size_unit,
-            calories=food.calories,
-            fat=food.fat,
-            protein=food.protein,
-            carbohydrates=food.carbohydrates,
-        )
-        for food in foods
-    ]
+    [print(f.__dict__) for f in foods]
+    return [FoodResponse.model_validate(food) for food in foods]
 
 
 @router.post("/foods", response_model=FoodResponse)
