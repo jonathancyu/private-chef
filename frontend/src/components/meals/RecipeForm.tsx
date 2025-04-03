@@ -29,16 +29,16 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
   const [showIngredientPopup, setShowIngredientPopup] = useState(false);
   const [newInstruction, setNewInstruction] = useState("");
 
-  const handleAddIngredient = (ingredientId: number) => {
+  const handleAddIngredient = (food: Food) => {
     setRecipe({
       ...recipe,
       ingredients: [
         ...recipe.ingredients,
         {
-          food_id: ingredientId,
-          quantity: 1,
-          unit: "",
+          food_id: food.id,
           note: "",
+          quantity: 1,
+          unit: food.serving_size_unit,
         },
       ],
     });

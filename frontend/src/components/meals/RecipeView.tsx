@@ -21,24 +21,15 @@ const RecipeView: React.FC<RecipeViewProps> = ({ recipe, onRecipeDeleted, onReci
     setIsEditing(false);
   }, [recipe]);
 
-  const handleAddIngredient = (ingredientId: number) => {
+  const handleAddIngredient = (food: Food) => {
     setEditedRecipe({
       ...editedRecipe,
       ingredients: [
         ...editedRecipe.ingredients,
         {
-          food: {
-            id: ingredientId,
-            name: "",
-            calories: 0,
-            protein: 0,
-            carbohydrates: 0,
-            fat: 0,
-            serving_size: 1.0,
-            serving_size_unit: "",
-          },
+          food,
           quantity: 1,
-          unit: "",
+          unit: food.serving_size_unit,
         },
       ],
     });
