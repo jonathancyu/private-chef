@@ -2,7 +2,7 @@ from typing import Optional, List
 import logging
 
 from sqlalchemy.orm import Session, joinedload
-from src.food.database import Food, Recipe, RecipeIngredient
+from src.food.database import Food, Recipe, RecipeIngredient, RecipeInstruction
 from src.food.models import (
     CreateFoodRequest,
     FoodResponse,
@@ -192,18 +192,36 @@ def update_recipe(
         for ingredient_data in request.ingredients:
             food = (
                 db_session.query(Food)
-                .filter(Food.id == ingredient_data.food.id)
+                .filter(Food.id == ingredient_data.food_id)
                 .first()
             )
-            if food:
-                recipe_ingredient = RecipeIngredient(
-                    recipe_id=recipe.id,
-                    food_id=food.id,
-                    quantity=ingredient_data.quantity,
-                    unit=ingredient_data.unit,
-                    note=ingredient_data.note,
-                )
-                db_session.add(recipe_ingredient)
+            assert (
+                food is not None
+            ), f"Food with ID {ingredient_data.food_id} not found."
+            recipe_ingredient = RecipeIngredient(
+                recipe_id=recipe.id,
+                food_id=food.id,
+                quantity=ingredient_data.quantity,
+                unit=ingredient_data.unit,
+                note=ingredient_data.note,
+            )
+            recipe.ingredients.append(recipe_ingredient)
+
+    # Update instructions if provided
+    if request.instructions is not None:
+        # First, remove existing instructions
+        db_session.query(RecipeInstruction).filter(
+            RecipeInstruction.recipe_id == recipe.id
+        ).delete()
+
+        # Then add the new instructions
+        for instruction_data in request.instructions:
+            recipe_instruction = RecipeInstruction(
+                recipe_id=recipe.id,
+                step=instruction_data.step,
+                text=instruction_data.text,
+            )
+            recipe.instructions.append(recipe_instruction)
 
     # Commit changes to the database
     db_session.commit()

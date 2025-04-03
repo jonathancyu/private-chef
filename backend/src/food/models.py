@@ -79,7 +79,6 @@ class CreateFoodRequest(Nutrition):
 class UpdateFoodRequest(BaseModel):
     id: int
     name: Optional[str] = None
-    state: Optional[FoodState] = None
     serving_size: Optional[float] = None
     serving_size_unit: Optional[str] = None
     calories: Optional[int] = None
@@ -104,7 +103,8 @@ class UpdateInventoryRequest(Nutrition):
 class UpdateRecipeRequest(BaseModel):
     id: int
     name: Optional[str] = None
-    ingredients: Optional[list[IngredientResponse]] = None
+    ingredients: Optional[list[IngredientRequest]] = None
+    instructions: Optional[list[InstructionRequest]] = None
     override_nutrition: Optional[bool] = None
     calories: Optional[int] = None
     fat: Optional[int] = None
