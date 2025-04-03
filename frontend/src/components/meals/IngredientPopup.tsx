@@ -1,22 +1,20 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Food } from "../../types/api.types";
-import { createIngredient } from "../../services/api";
+import { getIngredients, createIngredient } from "../../services/api";
 
 interface IngredientPopupProps {
-  availableIngredients: Food[];
   onSelectIngredient: (ingredientId: number) => void;
   onClose: () => void;
-  onIngredientCreated?: () => void;
 }
 
 const IngredientPopup: React.FC<IngredientPopupProps> = ({
-  availableIngredients,
   onSelectIngredient,
   onClose,
-  onIngredientCreated,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [availableIngredients, setAvailableIngredients] = useState<Food[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newIngredient, setNewIngredient] = useState({
     name: "",
     calories: 0,
@@ -32,38 +30,23 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
+    loadIngredients();
   }, []);
+
+  const loadIngredients = async () => {
+    try {
+      setLoading(true);
+      const ingredientsData = await getIngredients();
+      setAvailableIngredients(ingredientsData);
+    } catch (error) {
+      console.error("Failed to load ingredients", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredIngredients = availableIngredients.filter((ingredient) =>
     ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Separate ingredients into raw and recipe-based
-  const rawIngredients = filteredIngredients.filter(ing => !ing.source_recipe_id);
-  const recipeBasedIngredients = filteredIngredients.filter(ing => ing.source_recipe_id);
-
-  const renderIngredientList = (ingredients: Food[], title: string) => (
-    <>
-      {ingredients.length > 0 && (
-        <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-500 mb-2">{title}</h4>
-          <div className="space-y-2">
-            {ingredients.map((ingredient) => (
-              <button
-                key={ingredient.id}
-                onClick={() => onSelectIngredient(ingredient.id)}
-                className="w-full text-left p-3 hover:bg-gray-100 rounded border"
-              >
-                <div className="font-medium">{ingredient.name}</div>
-                <div className="text-sm text-gray-600">
-                  {ingredient.serving_size} {ingredient.serving_size_unit} | {ingredient.calories} cal
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
   );
 
   const handleCreateIngredient = async (e: React.FormEvent) => {
@@ -72,7 +55,6 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
     try {
       const createdIngredient = await createIngredient(newIngredient);
       onSelectIngredient(createdIngredient.id);
-      onIngredientCreated?.();
       onClose();
     } catch (error) {
       console.error("Failed to create ingredient", error);
@@ -259,16 +241,27 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
               />
             </div>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {renderIngredientList(rawIngredients, "Raw Ingredients")}
-              {renderIngredientList(recipeBasedIngredients, "Recipe-Based Ingredients")}
-              
-              {filteredIngredients.length === 0 && (
-                <p className="text-gray-500 text-center py-4">
-                  No ingredients found
-                </p>
-              )}
-            </div>
+            {loading ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Loading ingredients...</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredIngredients.map((ingredient) => (
+                  <button
+                    key={ingredient.id}
+                    onClick={() => onSelectIngredient(ingredient.id)}
+                    className="w-full text-left p-3 hover:bg-gray-100 rounded border"
+                  >
+                    <div className="font-medium">{ingredient.name}</div>
+                    <div className="text-sm text-gray-600">
+                      {ingredient.serving_size} {ingredient.serving_size_unit} | {ingredient.calories} cal
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="mt-4">
               <button
