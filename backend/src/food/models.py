@@ -2,11 +2,10 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from src.food.constants import FoodState
-from src.food.database import RecipeIngredient
 
 
 # Pydantic models
-class BaseRequest(BaseModel):
+class BaseResponse(BaseModel):
     model_config = ConfigDict(extra="ignore", from_attributes=True)
 
 
@@ -39,7 +38,7 @@ class FoodResponse(Nutrition):
     serving_size_unit: str
 
 
-class IngredientResponse(BaseRequest):
+class IngredientResponse(BaseResponse):
     model_config = ConfigDict(extra="ignore", from_attributes=True)
     food: FoodResponse
     note: Optional[str] = None
@@ -47,12 +46,19 @@ class IngredientResponse(BaseRequest):
     unit: str
 
 
-class RecipeResponse(BaseRequest):
+class InstructionResponse(BaseResponse):
+    id: int
+    step: int
+    text: str
+
+
+class RecipeResponse(BaseResponse):
     model_config = ConfigDict(extra="ignore", from_attributes=True)
     food: FoodResponse
     id: int
     name: str
     ingredients: list[IngredientResponse]
+    instructions: list[InstructionResponse]
 
 
 # Add food to database

@@ -65,6 +65,7 @@ class Recipe(Base):
     name: Mapped[str] = mapped_column(String)
     food: Mapped[Food] = relationship(back_populates="source_recipe")
     ingredients: Mapped[List["RecipeIngredient"]] = relationship()
+    instructions: Mapped[List["RecipeInstruction"]] = relationship()
     override_nutrition: Mapped[bool] = mapped_column(Boolean)
 
 
@@ -84,6 +85,15 @@ class RecipeIngredient(Base):
 
     quantity: Mapped[float] = mapped_column(Float)
     unit: Mapped[str] = mapped_column(String)
+
+
+class RecipeInstruction(Base):
+    __tablename__ = "recipe_instruction"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    step: Mapped[int] = mapped_column(Integer)
+    recipe: Mapped[Recipe] = relationship(back_populates="instructions")
+    text: Mapped[str] = mapped_column(String)
 
 
 class PlannedFood(Base):
