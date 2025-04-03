@@ -92,6 +92,7 @@ class RecipeInstruction(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     step: Mapped[int] = mapped_column(Integer)
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id"))
     recipe: Mapped[Recipe] = relationship(back_populates="instructions")
     text: Mapped[str] = mapped_column(String)
 
