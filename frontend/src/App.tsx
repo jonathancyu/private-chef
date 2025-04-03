@@ -1,21 +1,22 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import RecipesPage from "./pages/RecipesPage";
-import PlanningPage from "./pages/PlanningPage";
-import InventoryPage from "./pages/InventoryPage";
-import EatingPage from "./pages/EatingPage";
+import Header from "./components/layout/Header";
+import DashboardPage from "./pages/DashboardPage";
+import RecipePage from "./pages/RecipePage";
 
 const App: React.FC = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/recipes" element={<RecipesPage />} />
-        <Route path="/planning" element={<PlanningPage />} />
-        <Route path="/inventory" element={<InventoryPage />} />
-        <Route path="/eating" element={<EatingPage />} />
-      </Routes>
+      <div className="min-h-screen bg-gray-100">
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/recipes" element={<RecipePage />} />
+            {/* Add more routes as needed */}
+          </Routes>
+        </main>
+      </div>
     </Router>
   );
 };

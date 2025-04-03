@@ -1,7 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import Float as SQLFloat
 from src.food.database import Food, Recipe, RecipeIngredient
 from src.food.models import (
     CreateFoodRequest,
@@ -96,7 +95,10 @@ def create_food(
     # Return the response
     return FoodResponse(
         id=food.id,
+        name=food.name,
         calories=food.calories,
+        serving_size=food.serving_size,
+        serving_size_unit=food.serving_size_unit,
         fat=food.fat,
         protein=food.protein,
         carbohydrates=food.carbohydrates,
@@ -154,6 +156,7 @@ def create_recipe(
 
     return RecipeResponse(
         id=recipe.id,
+        name=recipe.name,
         ingredients=ingredients,
         calories=nutrition.calories,
         fat=nutrition.fat,
@@ -246,3 +249,20 @@ def update_recipe(
     db_session.refresh(recipe)
 
     return recipe
+
+
+def get_recipes(db_session: Session) -> List[Recipe]:
+    """Get all recipes with their ingredients and food data."""
+    return (
+        db_session.query(Recipe)
+        .options(
+            joinedload(Recipe.food),
+            joinedload(Recipe.ingredients).joinedload(RecipeIngredient.food),
+        )
+        .all()
+    )
+
+
+def get_foods(db_session: Session) -> List[Food]:
+    """Get all foods."""
+    return db_session.query(Food).all()

@@ -16,39 +16,39 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
   const [fatPerServing, setFatPerServing] = useState(0);
   const [instructions, setInstructions] = useState("");
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
-  const [availableIngredients, setAvailableIngredients] = useState<
-    Ingredient[]
-  >([]);
+  const [availableIngredients, setAvailableIngredients] = useState<Ingredient[]>([]);
   const [showIngredientPopup, setShowIngredientPopup] = useState(false);
 
-  const loadIngredients = async () => {
-    try {
-      const ingredients = await getIngredients();
-      setAvailableIngredients(ingredients);
-    } catch (error) {
-      console.error("Failed to load ingredients", error);
-    }
-  };
-
   useEffect(() => {
+    const loadIngredients = async () => {
+      try {
+        const ingredientsData = await getIngredients();
+        setAvailableIngredients(ingredientsData);
+      } catch (error) {
+        console.error("Failed to load ingredients", error);
+      }
+    };
+
     loadIngredients();
   }, []);
 
-  const handleIngredientSelected = async (ingredientId: number) => {
-    // Refresh the ingredients list to get the newly created ingredient
-    await loadIngredients();
-    setIngredients([
-      ...ingredients,
-      { id: 0, ingredient_id: ingredientId, amount: 1 },
-    ]);
+  const handleIngredientSelected = (ingredientId: number) => {
+    const selectedIngredient = availableIngredients.find(ing => ing.id === ingredientId);
+    if (selectedIngredient) {
+      setIngredients([
+        ...ingredients,
+        {
+          ingredient_id: selectedIngredient.id,
+          amount: 1,
+          unit: selectedIngredient.serving_size_unit,
+          name: selectedIngredient.name,
+        },
+      ]);
+    }
     setShowIngredientPopup(false);
   };
 
-  const updateIngredient = (
-    index: number,
-    field: keyof RecipeIngredient,
-    value: any,
-  ) => {
+  const updateIngredient = (index: number, field: keyof RecipeIngredient, value: any) => {
     const updatedIngredients = [...ingredients];
     updatedIngredients[index] = {
       ...updatedIngredients[index],
@@ -59,10 +59,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
-  };
-
-  const getIngredientDetails = (ingredientId: number): Ingredient | undefined => {
-    return availableIngredients.find((ing) => ing.id === ingredientId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,24 +73,11 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
         carbs_per_serving: carbsPerServing,
         fat_per_serving: fatPerServing,
         instructions,
-        ingredients: ingredients.map(({ ingredient_id, amount }) => ({
-          ingredient_id,
-          amount,
-        })),
-      } as Recipe;
+        ingredients,
+      };
 
       const createdRecipe = await createRecipe(recipeData);
       onRecipeCreated(createdRecipe);
-
-      // Reset form
-      setName("");
-      setServings(1);
-      setCaloriesPerServing(0);
-      setProteinPerServing(0);
-      setCarbsPerServing(0);
-      setFatPerServing(0);
-      setInstructions("");
-      setIngredients([]);
     } catch (error) {
       console.error("Failed to create recipe", error);
     }
@@ -129,9 +112,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-1">
-              Calories Per Serving
-            </label>
+            <label className="block text-gray-700 mb-1">Calories Per Serving</label>
             <input
               type="number"
               value={caloriesPerServing}
@@ -209,37 +190,30 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
             <p className="text-gray-500 text-sm italic">No ingredients added</p>
           )}
 
-          {ingredients.map((ingredient, index) => {
-            const ingredientDetails = getIngredientDetails(ingredient.ingredient_id);
-            return (
-              <div key={index} className="flex items-center space-x-2 mb-2">
-                <div className="flex-1 p-2 border rounded bg-gray-50">
-                  {ingredientDetails ? (
-                    `${ingredientDetails.name} (${ingredientDetails.unit})`
-                  ) : (
-                    "Unknown Ingredient"
-                  )}
-                </div>
-                <input
-                  type="number"
-                  value={ingredient.amount}
-                  onChange={(e) =>
-                    updateIngredient(index, "amount", Number(e.target.value))
-                  }
-                  className="w-24 p-2 border rounded"
-                  min="0.1"
-                  step="0.1"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeIngredient(index)}
-                  className="text-red-500"
-                >
-                  Remove
-                </button>
+          {ingredients.map((ingredient, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-2">
+              <div className="flex-1 p-2 border rounded bg-gray-50">
+                {ingredient.name} ({ingredient.unit})
               </div>
-            );
-          })}
+              <input
+                type="number"
+                value={ingredient.amount}
+                onChange={(e) =>
+                  updateIngredient(index, "amount", Number(e.target.value))
+                }
+                className="w-24 p-2 border rounded"
+                min="0.1"
+                step="0.1"
+              />
+              <button
+                type="button"
+                onClick={() => removeIngredient(index)}
+                className="text-red-500"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
         </div>
 
         <button

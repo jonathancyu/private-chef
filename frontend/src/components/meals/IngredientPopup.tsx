@@ -13,25 +13,32 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
   onSelectIngredient,
   onClose,
 }) => {
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [newIngredient, setNewIngredient] = useState({
     name: "",
-    unit: "",
-    calories_per_unit: 0,
-    protein_per_unit: 0,
-    carbs_per_unit: 0,
-    fat_per_unit: 0,
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    serving_size: 1.0,
+    serving_size_unit: "",
   });
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isCreatingNew && nameInputRef.current) {
-      nameInputRef.current.focus();
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
     }
-  }, [isCreatingNew]);
+  }, []);
+
+  const filteredIngredients = availableIngredients.filter((ingredient) =>
+    ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleCreateIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
       const createdIngredient = await createIngredient(newIngredient);
       onSelectIngredient(createdIngredient.id);
@@ -46,7 +53,7 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
       <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">
-            {isCreatingNew ? "Create New Ingredient" : "Select Ingredient"}
+            {showCreateForm ? "Create New Ingredient" : "Select Ingredient"}
           </h3>
           <button
             onClick={onClose}
@@ -56,145 +63,198 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
           </button>
         </div>
 
-        {!isCreatingNew ? (
+        {showCreateForm ? (
+          <form onSubmit={handleCreateIngredient}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={newIngredient.name}
+                  onChange={(e) =>
+                    setNewIngredient({ ...newIngredient, name: e.target.value })
+                  }
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Serving Size
+                  </label>
+                  <input
+                    type="number"
+                    value={newIngredient.serving_size}
+                    onChange={(e) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        serving_size: Number(e.target.value),
+                      })
+                    }
+                    className="w-full p-2 border rounded"
+                    min="0.1"
+                    step="0.1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Serving Size Unit
+                  </label>
+                  <input
+                    type="text"
+                    value={newIngredient.serving_size_unit}
+                    onChange={(e) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        serving_size_unit: e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border rounded"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Calories
+                  </label>
+                  <input
+                    type="number"
+                    value={newIngredient.calories}
+                    onChange={(e) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        calories: Number(e.target.value),
+                      })
+                    }
+                    className="w-full p-2 border rounded"
+                    min="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Protein (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={newIngredient.protein}
+                    onChange={(e) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        protein: Number(e.target.value),
+                      })
+                    }
+                    className="w-full p-2 border rounded"
+                    min="0"
+                    step="0.1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Carbs (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={newIngredient.carbs}
+                    onChange={(e) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        carbs: Number(e.target.value),
+                      })
+                    }
+                    className="w-full p-2 border rounded"
+                    min="0"
+                    step="0.1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fat (g)
+                  </label>
+                  <input
+                    type="number"
+                    value={newIngredient.fat}
+                    onChange={(e) =>
+                      setNewIngredient({
+                        ...newIngredient,
+                        fat: Number(e.target.value),
+                      })
+                    }
+                    className="w-full p-2 border rounded"
+                    min="0"
+                    step="0.1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : (
           <>
+            <div className="mb-4">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search ingredients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {availableIngredients.map((ingredient) => (
+              {filteredIngredients.map((ingredient) => (
                 <button
                   key={ingredient.id}
                   onClick={() => onSelectIngredient(ingredient.id)}
-                  className="w-full text-left p-2 hover:bg-gray-100 rounded"
+                  className="w-full text-left p-3 hover:bg-gray-100 rounded border"
                 >
-                  {ingredient.name} ({ingredient.unit})
+                  <div className="font-medium">{ingredient.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {ingredient.serving_size} {ingredient.serving_size_unit} | {ingredient.calories} cal
+                  </div>
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => setIsCreatingNew(true)}
-              className="mt-4 w-full bg-indigo-100 text-indigo-700 px-4 py-2 rounded hover:bg-indigo-200"
-            >
-              Create New Ingredient
-            </button>
+
+            <div className="mt-4">
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="w-full bg-indigo-100 text-indigo-700 px-4 py-2 rounded hover:bg-indigo-200"
+              >
+                + Create New Ingredient
+              </button>
+            </div>
           </>
-        ) : (
-          <form onSubmit={handleCreateIngredient} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Name
-              </label>
-              <input
-                ref={nameInputRef}
-                type="text"
-                value={newIngredient.name}
-                onChange={(e) =>
-                  setNewIngredient({ ...newIngredient, name: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Unit
-              </label>
-              <input
-                type="text"
-                value={newIngredient.unit}
-                onChange={(e) =>
-                  setNewIngredient({ ...newIngredient, unit: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Calories/Unit
-                </label>
-                <input
-                  type="number"
-                  value={newIngredient.calories_per_unit}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      calories_per_unit: Number(e.target.value),
-                    })
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Protein/Unit (g)
-                </label>
-                <input
-                  type="number"
-                  value={newIngredient.protein_per_unit}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      protein_per_unit: Number(e.target.value),
-                    })
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Carbs/Unit (g)
-                </label>
-                <input
-                  type="number"
-                  value={newIngredient.carbs_per_unit}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      carbs_per_unit: Number(e.target.value),
-                    })
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Fat/Unit (g)
-                </label>
-                <input
-                  type="number"
-                  value={newIngredient.fat_per_unit}
-                  onChange={(e) =>
-                    setNewIngredient({
-                      ...newIngredient,
-                      fat_per_unit: Number(e.target.value),
-                    })
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => setIsCreatingNew(false)}
-                className="px-4 py-2 text-gray-700 hover:text-gray-900"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-              >
-                Create
-              </button>
-            </div>
-          </form>
         )}
       </div>
     </div>

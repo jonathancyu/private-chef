@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -95,3 +95,53 @@ def update_recipe_route(
         protein=nutrition.protein,
         carbohydrates=nutrition.carbohydrates,
     )
+
+
+@router.get("/recipes", response_model=List[RecipeResponse])
+def get_recipes(db_session: Session = Depends(get_db_session)) -> List[RecipeResponse]:
+    """Get all recipes."""
+    recipes = service.get_recipes(db_session=db_session)
+    return [
+        RecipeResponse(
+            id=recipe.id,
+            name=recipe.name,
+            ingredients=[
+                IngredientResponse(
+                    food_id=i.food_id,
+                    name=i.name,
+                    note=i.note,
+                    quantity=i.quantity,
+                    unit=i.unit,
+                    calories=i.food.calories,
+                    fat=i.food.fat,
+                    protein=i.food.protein,
+                    carbohydrates=i.food.carbohydrates,
+                )
+                for i in recipe.ingredients
+            ],
+            calories=recipe.food.calories,
+            fat=recipe.food.fat,
+            protein=recipe.food.protein,
+            carbohydrates=recipe.food.carbohydrates,
+        )
+        for recipe in recipes
+    ]
+
+
+@router.get("/foods", response_model=List[FoodResponse])
+def get_foods(db_session: Session = Depends(get_db_session)) -> List[FoodResponse]:
+    """Get all foods."""
+    foods = service.get_foods(db_session=db_session)
+    return [
+        FoodResponse(
+            id=food.id,
+            name=food.name,
+            serving_size=food.serving_size,
+            serving_size_unit=food.serving_size_unit,
+            calories=food.calories,
+            fat=food.fat,
+            protein=food.protein,
+            carbohydrates=food.carbohydrates,
+        )
+        for food in foods
+    ]
