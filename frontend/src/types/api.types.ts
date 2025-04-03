@@ -5,21 +5,16 @@ export interface Nutrition {
   fat: number;
 }
 
-export interface Food {
+export interface Food extends Nutrition {
   id: number;
   name: string;
   serving_size: number;
   serving_size_unit: string;
-  calories: number;
-  protein: number;
-  carbohydrates: number;
-  fat: number;
 }
 
 export interface RecipeIngredient {
-  ingredient_id: number;
   food: Food;
-  amount: number;
+  quantity: number;
   unit: string;
   note?: string;
 }
@@ -38,11 +33,7 @@ export interface CreateRecipeRequest extends Nutrition {
 export interface Recipe {
   id: number;
   name: string;
-  servings: number;
-  calories_per_serving: number;
-  protein_per_serving: number;
-  carbohydrates_per_serving: number;
-  fat_per_serving: number;
+  food: Food;
   ingredients: RecipeIngredient[];
   instructions: string;
 }

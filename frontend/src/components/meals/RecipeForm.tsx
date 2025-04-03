@@ -9,8 +9,6 @@ interface RecipeFormProps {
 
 const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
   const [name, setName] = useState("");
-  const [servings, setServings] = useState(1);
-  const [instructions, setInstructions] = useState("");
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [availableIngredients, setAvailableIngredients] = useState<Food[]>([]);
   const [showIngredientPopup, setShowIngredientPopup] = useState(false);
@@ -41,9 +39,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
       setIngredients([
         ...ingredients,
         {
-          ingredient_id: selectedIngredient.id,
           food: selectedIngredient,
-          amount: 1,
+          quantity: 1,
           unit: selectedIngredient.serving_size_unit,
         },
       ]);
@@ -76,9 +73,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
         fat: nutrition.fat,
         override_nutrition: !calculateNutrition,
         ingredients: ingredients.map(ing => ({
-          food_id: ing.ingredient_id,
+          food_id: ing.food.id,
           note: ing.note || "",
-          quantity: ing.amount,
+          quantity: ing.quantity,
           unit: ing.unit
         }))
       };
@@ -101,19 +98,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-1">Servings</label>
-          <input
-            type="number"
-            value={servings}
-            onChange={(e) => setServings(Number(e.target.value))}
-            className="w-full p-2 border rounded"
-            min="1"
-            step="0.5"
             required
           />
         </div>
@@ -182,17 +166,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
         </div>
 
         <div className="mb-4">
-          <label className="block text-gray-700 mb-1">Instructions</label>
-          <textarea
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-            className="w-full p-2 border rounded"
-            rows={4}
-            required
-          />
-        </div>
-
-        <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
             <label className="block text-gray-700">Ingredients</label>
             <button
@@ -215,9 +188,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
               </div>
               <input
                 type="number"
-                value={ingredient.amount}
+                value={ingredient.quantity}
                 onChange={(e) =>
-                  updateIngredient(index, "amount", Number(e.target.value))
+                  updateIngredient(index, "quantity", Number(e.target.value))
                 }
                 className="w-24 p-2 border rounded"
                 min="0.1"

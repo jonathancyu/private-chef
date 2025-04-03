@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Recipe, Food } from "../types/api.types";
-import { getRecipes, getIngredients, createRecipe } from "../services/api";
+import { Recipe } from "../types/api.types";
+import { getRecipes, createRecipe } from "../services/api";
 import RecipeForm from "../components/meals/RecipeForm";
 import RecipeView from "../components/meals/RecipeView";
 
@@ -63,7 +63,7 @@ const RecipePage: React.FC = () => {
               >
                 <div className="font-medium">{recipe.name}</div>
                 <div className="text-sm text-gray-600">
-                  {recipe.servings} servings | {recipe.calories_per_serving} cal/serving
+                  {recipe.food.calories} calories
                 </div>
               </button>
             ))}
