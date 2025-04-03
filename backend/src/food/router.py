@@ -81,7 +81,7 @@ def create_recipe(
     )
 
 
-@router.delete("/recipes/{recipe_id}", response_model=RecipeResponse)
+@router.delete("/recipes/{recipe_id}")
 def delete_recipe_route(
     recipe_id: int,
     db_session: Session = Depends(get_db_session),
@@ -108,5 +108,4 @@ def update_recipe_route(
 def get_recipes(db_session: Session = Depends(get_db_session)) -> List[RecipeResponse]:
     """Get all recipes."""
     recipes = service.get_recipes(db_session=db_session)
-    logger.error(f"Retrieved {recipes} recipes from the database.")
     return [RecipeResponse.model_validate(recipe) for recipe in recipes]

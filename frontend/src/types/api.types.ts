@@ -19,6 +19,12 @@ export interface RecipeIngredient {
   note?: string;
 }
 
+export interface RecipeInstruction {
+  id: number;
+  step: number;
+  text: string;
+}
+
 export interface CreateRecipeRequest extends Nutrition {
   name: string;
   ingredients: {
@@ -35,7 +41,7 @@ export interface Recipe {
   name: string;
   food: Food;
   ingredients: RecipeIngredient[];
-  instructions: string;
+  instructions: RecipeInstruction[];
 }
 
 export enum MealType {
