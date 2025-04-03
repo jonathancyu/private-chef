@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Recipe, RecipeInstruction, UpdateRecipeRequest } from "../../types/api.types";
-import { deleteRecipe, updateRecipe } from "../../services/api";
+import React, { useState, useEffect } from "react";
+import { Recipe, RecipeInstruction, UpdateRecipeRequest, Food } from "../../types/api.types";
+import { deleteRecipe, updateRecipe, getIngredients } from "../../services/api";
 import IngredientPopup from "./IngredientPopup";
 
 interface RecipeViewProps {
@@ -15,6 +15,45 @@ const RecipeView: React.FC<RecipeViewProps> = ({ recipe, onRecipeDeleted, onReci
   const [editedRecipe, setEditedRecipe] = useState(recipe);
   const [showIngredientPopup, setShowIngredientPopup] = useState(false);
   const [newInstruction, setNewInstruction] = useState("");
+  const [availableIngredients, setAvailableIngredients] = useState<Food[]>([]);
+
+  useEffect(() => {
+    setEditedRecipe(recipe);
+    setIsEditing(false);
+  }, [recipe]);
+
+  useEffect(() => {
+    if (showIngredientPopup) {
+      loadIngredients();
+    }
+  }, [showIngredientPopup]);
+
+  const loadIngredients = async () => {
+    try {
+      const ingredientsData = await getIngredients();
+      setAvailableIngredients(ingredientsData);
+    } catch (error) {
+      console.error("Failed to load ingredients", error);
+    }
+  };
+
+  const handleAddIngredient = (ingredientId: number) => {
+    const selectedIngredient = availableIngredients.find(ing => ing.id === ingredientId);
+    if (selectedIngredient) {
+      setEditedRecipe({
+        ...editedRecipe,
+        ingredients: [
+          ...editedRecipe.ingredients,
+          {
+            food: selectedIngredient,
+            quantity: 1,
+            unit: selectedIngredient.serving_size_unit,
+          },
+        ],
+      });
+    }
+    setShowIngredientPopup(false);
+  };
 
   const handleDelete = async () => {
     try {
@@ -369,11 +408,8 @@ const RecipeView: React.FC<RecipeViewProps> = ({ recipe, onRecipeDeleted, onReci
 
       {showIngredientPopup && (
         <IngredientPopup
-          availableIngredients={[]} // TODO: Pass available ingredients
-          onSelectIngredient={(id) => {
-            // TODO: Handle ingredient selection
-            setShowIngredientPopup(false);
-          }}
+          availableIngredients={availableIngredients}
+          onSelectIngredient={handleAddIngredient}
           onClose={() => setShowIngredientPopup(false)}
         />
       )}
