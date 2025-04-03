@@ -1,7 +1,8 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
-from src.food.constants import FoodState
+from src.food.constants import FoodState, MealType
+import datetime as dt
 
 
 # Pydantic models
@@ -110,3 +111,30 @@ class UpdateRecipeRequest(BaseModel):
     fat: Optional[int] = None
     protein: Optional[int] = None
     carbohydrates: Optional[int] = None
+
+
+# Planned Food models
+class CreatePlannedFoodRequest(BaseModel):
+    date: dt.date
+    meal: MealType
+    servings: float
+    food_id: int
+    eaten: bool = False
+
+
+class UpdatePlannedFoodRequest(BaseModel):
+    id: int
+    date: Optional[dt.date] = None  # ISO format date (YYYY-MM-DD)
+    meal: Optional[MealType] = None
+    food_id: Optional[int] = None
+    servings: Optional[float] = None
+    eaten: Optional[bool] = None
+
+
+class PlannedFoodResponse(BaseResponse):
+    id: int
+    date: str
+    meal_type: str
+    food: FoodResponse
+    servings: float
+    eaten: bool

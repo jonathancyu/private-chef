@@ -1,5 +1,5 @@
 from typing import Any, Generator, List, Optional
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer, Float, String
+from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, Float, String
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -8,6 +8,7 @@ from sqlalchemy.orm import (
     relationship,
     sessionmaker,
 )
+import datetime as dt
 
 from src.food.constants import FoodState, MealType
 from src.config import settings
@@ -107,9 +108,14 @@ class PlannedFood(Base):
     __tablename__ = "planned_food"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # When is the food planned for
+    date: Mapped[dt.date] = mapped_column(Date)
     meal: Mapped[MealType] = mapped_column(Enum(MealType))
+    # Food details
+    servings: Mapped[float] = mapped_column(Float)
     food_id: Mapped[int] = mapped_column(ForeignKey("food.id"))
     food: Mapped[Food] = relationship()
+    eaten: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Inventory(Base):

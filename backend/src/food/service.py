@@ -2,7 +2,13 @@ from typing import Optional, List
 import logging
 
 from sqlalchemy.orm import Session, joinedload
-from src.food.database import Food, Recipe, RecipeIngredient, RecipeInstruction
+from src.food.database import (
+    Food,
+    Recipe,
+    RecipeIngredient,
+    RecipeInstruction,
+    PlannedFood,
+)
 from src.food.models import (
     CreateFoodRequest,
     FoodResponse,
@@ -11,7 +17,10 @@ from src.food.models import (
     CreateRecipeRequest,
     UpdateFoodRequest,
     UpdateRecipeRequest,
+    CreatePlannedFoodRequest,
+    UpdatePlannedFoodRequest,
 )
+import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -257,3 +266,115 @@ def delete_recipe(db_session: Session, recipe_id: int) -> bool:
 def get_foods(db_session: Session) -> List[Food]:
     """Get all foods."""
     return db_session.query(Food).all()
+
+
+#
+# Planned Food
+def get_planned_foods(
+    db_session: Session,
+    start_date: dt.date,
+    end_date: dt.date,
+) -> List["PlannedFood"]:
+    query = db_session.query(PlannedFood).options(
+        joinedload(PlannedFood.food).joinedload(Food.source_recipe),
+    )
+
+    # Apply date range filters (both are required)
+    query = query.filter(PlannedFood.date >= start_date)
+    query = query.filter(PlannedFood.date <= end_date)
+
+    return query.order_by(PlannedFood.date, PlannedFood.meal).all()
+
+
+def create_planned_food(
+    db_session: Session, request: "CreatePlannedFoodRequest"
+) -> "PlannedFood":
+    """Create a new planned food entry.
+
+    Args:
+        db_session: Database session
+        request: Create planned food request
+
+    Returns:
+        Created PlannedFood object
+    """
+
+    food = get_food(db_session=db_session, id=request.food_id)
+    assert food is not None, f"Food with ID {request.food_id} not found."
+    planned_food = PlannedFood(
+        date=request.date,
+        meal=request.meal,
+        servings=request.servings,
+        food=food,
+        eaten=request.eaten,
+    )
+
+    db_session.add(planned_food)
+    db_session.commit()
+    db_session.refresh(planned_food)
+
+    return planned_food
+
+
+def update_planned_food(
+    db_session: Session, request: "UpdatePlannedFoodRequest"
+) -> Optional["PlannedFood"]:
+    """Update an existing planned food entry.
+
+    Args:
+        db_session: Database session
+        request: Update planned food request
+
+    Returns:
+        Updated PlannedFood object or None if not found
+    """
+    planned_food = (
+        db_session.query(PlannedFood).filter(PlannedFood.id == request.id).first()
+    )
+    if not planned_food:
+        return None
+
+    # Update fields if provided
+    if request.date is not None:
+        planned_food.date = request.date
+    if request.meal is not None:
+        planned_food.meal = request.meal
+    if request.servings is not None:
+        planned_food.servings = request.servings
+    if request.eaten is not None:
+        planned_food.eaten = request.eaten
+
+    # Update food or recipe reference if provided
+    if request.food_id is not None:
+        food = get_food(db_session, request.food_id)
+        assert food is not None, f"Food with ID {request.food_id} not found."
+        planned_food.food_id = request.food_id
+
+    db_session.commit()
+    db_session.refresh(planned_food)
+
+    return planned_food
+
+
+def delete_planned_food(db_session: Session, planned_food_id: int) -> bool:
+    """Delete a planned food entry by ID.
+
+    Args:
+        db_session: Database session
+        planned_food_id: ID of the planned food to delete
+
+    Returns:
+        True if deleted successfully, False if not found
+    """
+    planned_food = (
+        db_session.query(PlannedFood).filter(PlannedFood.id == planned_food_id).first()
+    )
+    if not planned_food:
+        return False
+
+    db_session.delete(planned_food)
+    db_session.commit()
+    return True
+
+
+# Planned Food

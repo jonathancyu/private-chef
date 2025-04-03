@@ -11,6 +11,9 @@ from src.food.models import (
     RecipeResponse,
     UpdateFoodRequest,
     UpdateRecipeRequest,
+    CreatePlannedFoodRequest,
+    UpdatePlannedFoodRequest,
+    PlannedFoodResponse,
 )
 import logging
 
@@ -98,3 +101,49 @@ def get_recipes(db_session: Session = Depends(get_db_session)) -> List[RecipeRes
     """Get all recipes."""
     recipes = service.get_recipes(db_session=db_session)
     return [RecipeResponse.model_validate(recipe) for recipe in recipes]
+
+
+# Planned Foods endpoints
+@router.get("/planned-foods", response_model=List[PlannedFoodResponse])
+def get_planned_foods(
+    date: Optional[str] = None, db_session: Session = Depends(get_db_session)
+) -> List[PlannedFoodResponse]:
+    """Get planned foods, optionally filtered by date."""
+    planned_foods = service.get_planned_foods(db_session=db_session, date=date)
+    return [PlannedFoodResponse.model_validate(pf) for pf in planned_foods]
+
+
+@router.post("/planned-foods", response_model=PlannedFoodResponse)
+def create_planned_food(
+    request: CreatePlannedFoodRequest, db_session: Session = Depends(get_db_session)
+) -> PlannedFoodResponse:
+    """Create a new planned food entry."""
+    planned_food = service.create_planned_food(db_session=db_session, request=request)
+    return PlannedFoodResponse.model_validate(planned_food)
+
+
+@router.put("/planned-foods/{planned_food_id}", response_model=PlannedFoodResponse)
+def update_planned_food(
+    planned_food_id: int,
+    request: UpdatePlannedFoodRequest,
+    db_session: Session = Depends(get_db_session),
+) -> Optional[PlannedFoodResponse]:
+    """Update an existing planned food entry."""
+    # Ensure the ID in the path matches the ID in the request
+    request.id = planned_food_id
+    planned_food = service.update_planned_food(db_session=db_session, request=request)
+
+    if not planned_food:
+        return None
+
+    return PlannedFoodResponse.model_validate(planned_food)
+
+
+@router.delete("/planned-foods/{planned_food_id}")
+def delete_planned_food(
+    planned_food_id: int, db_session: Session = Depends(get_db_session)
+) -> bool:
+    """Delete a planned food entry."""
+    return service.delete_planned_food(
+        db_session=db_session, planned_food_id=planned_food_id
+    )
