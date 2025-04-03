@@ -55,3 +55,18 @@ export enum MealType {
   DINNER = "dinner",
   SNACK = "snack",
 }
+
+export interface UpdateRecipeRequest {
+  id: number;
+  name: string;
+  ingredients: {
+    food_id: number;
+    note: string;
+    quantity: number;
+    unit: string;
+  }[];
+  instructions: {
+    step: number;
+    text: string;
+  }[];
+}

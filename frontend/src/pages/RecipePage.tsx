@@ -39,6 +39,13 @@ const RecipePage: React.FC = () => {
     }
   };
 
+  const handleRecipeUpdated = (updatedRecipe: Recipe) => {
+    setRecipes(recipes.map(recipe => 
+      recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+    ));
+    setSelectedRecipe(updatedRecipe);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)] bg-gray-100">
@@ -96,7 +103,11 @@ const RecipePage: React.FC = () => {
         {showCreateForm ? (
           <RecipeForm onRecipeCreated={handleRecipeCreated} />
         ) : selectedRecipe ? (
-          <RecipeView recipe={selectedRecipe} onRecipeDeleted={handleRecipeDeleted} />
+          <RecipeView 
+            recipe={selectedRecipe} 
+            onRecipeDeleted={handleRecipeDeleted}
+            onRecipeUpdated={handleRecipeUpdated}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <svg className="h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

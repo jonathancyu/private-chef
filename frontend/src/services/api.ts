@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Recipe, Food, CreateRecipeRequest } from "../types/api.types";
+import { Recipe, Food, CreateRecipeRequest, UpdateRecipeRequest } from "../types/api.types";
 
 const API_URL = "http://localhost:8000/api";
 
@@ -25,7 +25,7 @@ export const createRecipe = async (recipe: CreateRecipeRequest): Promise<Recipe>
   return response.data;
 };
 
-export const updateRecipe = async (id: number, recipe: Partial<Recipe>): Promise<Recipe> => {
+export const updateRecipe = async (id: number, recipe: UpdateRecipeRequest): Promise<Recipe> => {
   const response = await api.put(`/recipes/${id}`, recipe);
   return response.data;
 };
