@@ -1,17 +1,19 @@
 from typing import Optional, List
+import logging
 
 from sqlalchemy.orm import Session, joinedload
 from src.food.database import Food, Recipe, RecipeIngredient
 from src.food.models import (
     CreateFoodRequest,
     FoodResponse,
-    IngredientResponse,
+    IngredientRequest,
     Nutrition,
     CreateRecipeRequest,
-    RecipeResponse,
     UpdateFoodRequest,
     UpdateRecipeRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_nutrition(db_session: Session, recipe: Recipe) -> Nutrition:
@@ -41,22 +43,10 @@ def get_recipe_ingredient(db_session: Session, id: int) -> Optional[RecipeIngred
 
 
 def create_recipe_ingredient(
-    db_session: Session, recipe: Recipe, ingredient_data: IngredientResponse
+    db_session: Session, recipe: Recipe, ingredient_data: IngredientRequest
 ) -> Optional[RecipeIngredient]:
     food = get_food(db_session, ingredient_data.food_id)
-    if food is None:
-        # Create a new Food item
-        food = Food(
-            name=ingredient_data.name,
-            serving_size=1.0,  # Default
-            serving_size_unit=ingredient_data.unit,
-            calories=ingredient_data.calories,
-            fat=ingredient_data.fat,
-            protein=ingredient_data.protein,
-            carbohydrates=ingredient_data.carbohydrates,
-        )
-        db_session.add(food)
-        db_session.flush()  # Get the ID without committing
+    assert food is not None, f"Food with ID {ingredient_data.food_id} not found."
 
     # Create the recipe ingredient
     recipe_ingredient = RecipeIngredient(
@@ -104,14 +94,9 @@ def create_food(
     )
 
 
-def create_recipe(
-    db_session: Session, request: CreateRecipeRequest
-) -> Optional[RecipeResponse]:
+def create_recipe(db_session: Session, request: CreateRecipeRequest) -> Recipe:
     # Create the Recipe first
-    recipe = Recipe(
-        name=request.name,
-        override_nutrition=request.override_nutrition
-    )
+    recipe = Recipe(name=request.name, override_nutrition=request.override_nutrition)
     db_session.add(recipe)
     db_session.flush()  # Get the ID without committing
 
@@ -129,42 +114,17 @@ def create_recipe(
     db_session.add(food)
 
     # Create recipe ingredients
-    ingredients = []
     for ingredient_data in request.ingredients:
         ingredient = create_recipe_ingredient(
             db_session=db_session, recipe=recipe, ingredient_data=ingredient_data
         )
         assert ingredient is not None
-
-        food = recipe.food
-        ingredients.append(
-            IngredientResponse(
-                food_id=ingredient_data.food_id,
-                name=ingredient_data.name,
-                note=ingredient_data.note,
-                quantity=ingredient_data.quantity,
-                unit=ingredient_data.unit,
-                calories=food.calories,
-                fat=food.fat,
-                protein=food.protein,
-                carbohydrates=food.carbohydrates,
-            )
-        )
+        recipe.ingredients.append(ingredient)
 
     db_session.commit()
     db_session.refresh(recipe)
 
-    nutrition = get_nutrition(db_session=db_session, recipe=recipe)
-
-    return RecipeResponse(
-        id=recipe.id,
-        name=recipe.name,
-        ingredients=ingredients,
-        calories=nutrition.calories,
-        fat=nutrition.fat,
-        protein=nutrition.protein,
-        carbohydrates=nutrition.carbohydrates,
-    )
+    return recipe
 
 
 def update_food(db_session: Session, request: UpdateFoodRequest) -> Optional[Food]:
@@ -232,14 +192,13 @@ def update_recipe(
         for ingredient_data in request.ingredients:
             food = (
                 db_session.query(Food)
-                .filter(Food.id == ingredient_data.food_id)
+                .filter(Food.id == ingredient_data.food.id)
                 .first()
             )
             if food:
                 recipe_ingredient = RecipeIngredient(
                     recipe_id=recipe.id,
                     food_id=food.id,
-                    name=ingredient_data.name,
                     quantity=ingredient_data.quantity,
                     unit=ingredient_data.unit,
                     note=ingredient_data.note,

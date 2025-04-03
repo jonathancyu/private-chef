@@ -1,10 +1,15 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from src.food.constants import FoodState
+from src.food.database import RecipeIngredient
 
 
 # Pydantic models
+class BaseRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+
+
 class Nutrition(BaseModel):
     calories: int
     fat: int
@@ -26,15 +31,25 @@ class CreateRecipeRequest(Nutrition):
     override_nutrition: bool
 
 
-class IngredientResponse(Nutrition):
-    food_id: int
+class FoodResponse(Nutrition):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    id: int
     name: str
-    note: str
+    serving_size: float
+    serving_size_unit: str
+
+
+class IngredientResponse(BaseRequest):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    food: FoodResponse
+    note: Optional[str] = None
     quantity: float
     unit: str
 
 
-class RecipeResponse(Nutrition):
+class RecipeResponse(BaseRequest):
+    model_config = ConfigDict(extra="ignore", from_attributes=True)
+    food: FoodResponse
     id: int
     name: str
     ingredients: list[IngredientResponse]
@@ -46,13 +61,6 @@ class CreateFoodRequest(Nutrition):
     serving_size: float
     serving_size_unit: str
     # TODO: if nutrition not present look up from usda
-
-
-class FoodResponse(Nutrition):
-    id: int
-    name: str
-    serving_size: float
-    serving_size_unit: str
 
 
 class UpdateFoodRequest(BaseModel):

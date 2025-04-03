@@ -1,19 +1,20 @@
-import re
 from typing import Optional, List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from src.food import service
-from src.food.database import Recipe, RecipeIngredient, get_db_session
+from src.food.database import get_db_session
 from src.food.models import (
     CreateFoodRequest,
     FoodResponse,
     CreateRecipeRequest,
-    IngredientResponse,
     RecipeResponse,
     UpdateFoodRequest,
     UpdateRecipeRequest,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter()
@@ -75,7 +76,9 @@ def update_food_route(
 def create_recipe(
     request: CreateRecipeRequest, db_session: Session = Depends(get_db_session)
 ) -> Optional[RecipeResponse]:
-    return service.create_recipe(db_session=db_session, request=request)
+    return RecipeResponse.model_validate(
+        service.create_recipe(db_session=db_session, request=request)
+    )
 
 
 @router.put("/recipes/{recipe_id}", response_model=RecipeResponse)
@@ -89,59 +92,13 @@ def update_recipe_route(
     recipe = service.update_recipe(db_session=db_session, request=request)
     if recipe is None:
         return None
-    # Convert the Recipe model to RecipeResponse
-    nutrition = service.get_nutrition(db_session, recipe)
-    ingredients = [
-        IngredientResponse(
-            food_id=i.food_id,
-            name=i.name,
-            note=i.note,
-            quantity=i.quantity,
-            unit=i.unit,
-            calories=i.food.calories,
-            fat=i.food.fat,
-            protein=i.food.protein,
-            carbohydrates=i.food.carbohydrates,
-        )
-        for i in recipe.ingredients
-    ]
-    return RecipeResponse(
-        id=recipe.id,
-        name=recipe.name,
-        ingredients=ingredients,
-        calories=nutrition.calories,
-        fat=nutrition.fat,
-        protein=nutrition.protein,
-        carbohydrates=nutrition.carbohydrates,
-    )
+
+    return RecipeResponse.model_validate(recipe)
 
 
 @router.get("/recipes", response_model=List[RecipeResponse])
 def get_recipes(db_session: Session = Depends(get_db_session)) -> List[RecipeResponse]:
     """Get all recipes."""
     recipes = service.get_recipes(db_session=db_session)
-    return [
-        RecipeResponse(
-            id=recipe.id,
-            name=recipe.name,
-            ingredients=[
-                IngredientResponse(
-                    food_id=i.food_id,
-                    name=i.name,
-                    note=i.note,
-                    quantity=i.quantity,
-                    unit=i.unit,
-                    calories=i.food.calories,
-                    fat=i.food.fat,
-                    protein=i.food.protein,
-                    carbohydrates=i.food.carbohydrates,
-                )
-                for i in recipe.ingredients
-            ],
-            calories=recipe.food.calories,
-            fat=recipe.food.fat,
-            protein=recipe.food.protein,
-            carbohydrates=recipe.food.carbohydrates,
-        )
-        for recipe in recipes
-    ]
+    logger.error(f"Retrieved {recipes} recipes from the database.")
+    return [RecipeResponse.model_validate(recipe) for recipe in recipes]
