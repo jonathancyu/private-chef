@@ -16,6 +16,15 @@ const RecipePage: React.FC = () => {
         setLoading(true);
         const recipesData = await getRecipes();
         setRecipes(recipesData);
+
+        // Load saved recipe ID from localStorage
+        const savedRecipeId = localStorage.getItem('selectedRecipeId');
+        if (savedRecipeId) {
+          const savedRecipe = recipesData.find(recipe => recipe.id.toString() === savedRecipeId);
+          if (savedRecipe) {
+            setSelectedRecipe(savedRecipe);
+          }
+        }
       } catch (error) {
         console.error("Failed to load recipes", error);
       } finally {

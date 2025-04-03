@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Recipe, RecipeInstruction, UpdateRecipeRequest, Food } from "../../types/api.types";
-import { deleteRecipe, updateRecipe } from "../../services/api";
+import { deleteRecipe, updateRecipe, getIngredients } from "../../services/api";
 import IngredientPopup from "./IngredientPopup";
 
 interface RecipeViewProps {
@@ -12,9 +12,25 @@ interface RecipeViewProps {
 const RecipeView: React.FC<RecipeViewProps> = ({ recipe, onRecipeDeleted, onRecipeUpdated }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [editedRecipe, setEditedRecipe] = useState(recipe);
+  const [editedRecipe, setEditedRecipe] = useState<Recipe>(recipe);
   const [showIngredientPopup, setShowIngredientPopup] = useState(false);
   const [newInstruction, setNewInstruction] = useState("");
+
+  // Save selected recipe ID to localStorage when it changes
+  useEffect(() => {
+    if (recipe.id) {
+      localStorage.setItem('selectedRecipeId', recipe.id.toString());
+    }
+  }, [recipe.id]);
+
+  // Load selected recipe ID from localStorage on mount
+  useEffect(() => {
+    const savedRecipeId = localStorage.getItem('selectedRecipeId');
+    if (savedRecipeId && recipe.id.toString() !== savedRecipeId) {
+      // If the current recipe doesn't match the saved one, notify parent
+      onRecipeUpdated({ ...recipe, id: parseInt(savedRecipeId) });
+    }
+  }, []);
 
   useEffect(() => {
     setEditedRecipe(recipe);
