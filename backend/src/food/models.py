@@ -24,9 +24,15 @@ class IngredientRequest(BaseModel):
     unit: str
 
 
+class InstructionRequest(BaseModel):
+    step: int
+    text: str
+
+
 class CreateRecipeRequest(Nutrition):
     name: str
     ingredients: list[IngredientRequest]
+    instructions: list[InstructionRequest]
     override_nutrition: bool
 
 

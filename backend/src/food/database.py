@@ -64,8 +64,12 @@ class Recipe(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String)
     food: Mapped[Food] = relationship(back_populates="source_recipe")
-    ingredients: Mapped[List["RecipeIngredient"]] = relationship()
-    instructions: Mapped[List["RecipeInstruction"]] = relationship()
+    ingredients: Mapped[List["RecipeIngredient"]] = relationship(
+        back_populates="recipe", cascade="all, delete-orphan"
+    )
+    instructions: Mapped[List["RecipeInstruction"]] = relationship(
+        back_populates="recipe", cascade="all, delete-orphan"
+    )
     override_nutrition: Mapped[bool] = mapped_column(Boolean)
 
 
@@ -78,7 +82,7 @@ class RecipeIngredient(Base):
     food_id: Mapped[int] = mapped_column(ForeignKey("food.id"))
     food: Mapped[Food] = relationship()  # Food containing nutrition for this ingredient
     note: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id"))
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id", ondelete="CASCADE"))
     recipe: Mapped[Recipe] = relationship(
         back_populates="ingredients"
     )  # Recipe this ingredient is part of
@@ -92,7 +96,7 @@ class RecipeInstruction(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     step: Mapped[int] = mapped_column(Integer)
-    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id"))
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id", ondelete="CASCADE"))
     recipe: Mapped[Recipe] = relationship(back_populates="instructions")
     text: Mapped[str] = mapped_column(String)
 

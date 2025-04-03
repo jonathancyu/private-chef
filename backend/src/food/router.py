@@ -81,6 +81,14 @@ def create_recipe(
     )
 
 
+@router.delete("/recipes/{recipe_id}", response_model=RecipeResponse)
+def delete_recipe_route(
+    recipe_id: int,
+    db_session: Session = Depends(get_db_session),
+) -> bool:
+    return service.delete_recipe(db_session=db_session, recipe_id=recipe_id)
+
+
 @router.put("/recipes/{recipe_id}", response_model=RecipeResponse)
 def update_recipe_route(
     recipe_id: int,

@@ -224,6 +224,18 @@ def get_recipes(db_session: Session) -> List[Recipe]:
     )
 
 
+def delete_recipe(db_session: Session, recipe_id: int) -> bool:
+    """Delete a recipe by ID."""
+    recipe = db_session.query(Recipe).filter(Recipe.id == recipe_id).first()
+    if not recipe:
+        return False
+
+    # Delete the recipe and its ingredients
+    db_session.delete(recipe)
+    db_session.commit()
+    return True
+
+
 def get_foods(db_session: Session) -> List[Food]:
     """Get all foods."""
     return db_session.query(Food).all()
