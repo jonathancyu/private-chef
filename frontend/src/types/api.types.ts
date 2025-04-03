@@ -10,6 +10,7 @@ export interface Food extends Nutrition {
   name: string;
   serving_size: number;
   serving_size_unit: string;
+  source_recipe_id?: number; // ID of the recipe this food is based on, if any
 }
 
 export interface RecipeIngredient {
@@ -32,6 +33,10 @@ export interface CreateRecipeRequest extends Nutrition {
     note: string;
     quantity: number;
     unit: string;
+  }[];
+  instructions: {
+    step: number;
+    text: string;
   }[];
   override_nutrition: boolean;
 }

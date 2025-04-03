@@ -114,6 +114,10 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onRecipeCreated }) => {
           note: ing.note || "",
           quantity: ing.quantity,
           unit: ing.unit
+        })),
+        instructions: instructions.map(instruction => ({
+          step: instruction.step,
+          text: instruction.text
         }))
       };
 
