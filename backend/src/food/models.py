@@ -13,9 +13,8 @@ class Nutrition(BaseModel):
 
 
 # Create recipe models
-class IngredientResponse(Nutrition):
+class IngredientRequest(BaseModel):
     food_id: int
-    name: str
     note: str
     quantity: float
     unit: str
@@ -23,8 +22,16 @@ class IngredientResponse(Nutrition):
 
 class CreateRecipeRequest(Nutrition):
     name: str
-    ingredients: list[IngredientResponse]
+    ingredients: list[IngredientRequest]
     override_nutrition: bool
+
+
+class IngredientResponse(Nutrition):
+    food_id: int
+    name: str
+    note: str
+    quantity: float
+    unit: str
 
 
 class RecipeResponse(Nutrition):

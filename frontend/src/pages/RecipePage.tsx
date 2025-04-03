@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Recipe, Ingredient } from "../types/api.types";
+import { Recipe, Food } from "../types/api.types";
 import { getRecipes, getIngredients, createRecipe } from "../services/api";
 import RecipeForm from "../components/meals/RecipeForm";
 import RecipeView from "../components/meals/RecipeView";

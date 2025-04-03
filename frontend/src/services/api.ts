@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Recipe, Ingredient } from "../types/api.types";
+import { Recipe, Food, CreateRecipeRequest } from "../types/api.types";
 
 const API_URL = "http://localhost:8000/api";
 
@@ -20,7 +20,7 @@ export const getRecipe = async (id: number): Promise<Recipe> => {
   return response.data;
 };
 
-export const createRecipe = async (recipe: Omit<Recipe, "id">): Promise<Recipe> => {
+export const createRecipe = async (recipe: CreateRecipeRequest): Promise<Recipe> => {
   const response = await api.post("/recipes", recipe);
   return response.data;
 };
@@ -34,34 +34,29 @@ export const deleteRecipe = async (id: number): Promise<void> => {
   await api.delete(`/recipes/${id}`);
 };
 
-export const getIngredients = async (): Promise<Ingredient[]> => {
-  const response = await api.get("/foods");
-  return response.data.map((food: any) => ({
-    id: food.id,
-    name: food.name,
-    calories: food.calories,
-    protein: food.protein,
-    carbs: food.carbohydrates,
-    fat: food.fat,
-    serving_size: food.serving_size,
-    serving_size_unit: food.serving_size_unit,
-  }));
+export const getIngredients = async (): Promise<Food[]> => {
+  const response = await fetch(`${API_URL}/foods`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch ingredients");
+  }
+  return response.json();
 };
 
-export const createIngredient = async (ingredient: Omit<Ingredient, "id">): Promise<Ingredient> => {
-  const response = await api.post("/food", {
-    name: ingredient.name,
-    serving_size: ingredient.serving_size,
-    serving_size_unit: ingredient.serving_size_unit,
-    calories: ingredient.calories,
-    fat: ingredient.fat,
-    protein: ingredient.protein,
-    carbohydrates: ingredient.carbs,
+export const createIngredient = async (ingredient: Omit<Food, "id">): Promise<Food> => {
+  const response = await fetch(`${API_URL}/foods`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(ingredient),
   });
-  return response.data;
+  if (!response.ok) {
+    throw new Error("Failed to create ingredient");
+  }
+  return response.json();
 };
 
-export const updateIngredient = async (id: number, ingredient: Partial<Ingredient>): Promise<Ingredient> => {
+export const updateIngredient = async (id: number, ingredient: Partial<Food>): Promise<Food> => {
   const response = await api.put(`/ingredients/${id}`, ingredient);
   return response.data;
 };

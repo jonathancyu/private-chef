@@ -62,7 +62,6 @@ def create_recipe_ingredient(
     recipe_ingredient = RecipeIngredient(
         recipe=recipe,
         food=food,
-        name=ingredient_data.name,
         quantity=ingredient_data.quantity,
         unit=ingredient_data.unit,
     )
@@ -109,7 +108,10 @@ def create_recipe(
     db_session: Session, request: CreateRecipeRequest
 ) -> Optional[RecipeResponse]:
     # Create the Recipe first
-    recipe = Recipe(override_nutrition=request.override_nutrition)
+    recipe = Recipe(
+        name=request.name,
+        override_nutrition=request.override_nutrition
+    )
     db_session.add(recipe)
     db_session.flush()  # Get the ID without committing
 

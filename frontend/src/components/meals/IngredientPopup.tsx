@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Ingredient } from "../../types/api.types";
+import { Food } from "../../types/api.types";
 import { createIngredient } from "../../services/api";
 
 interface IngredientPopupProps {
-  availableIngredients: Ingredient[];
+  availableIngredients: Food[];
   onSelectIngredient: (ingredientId: number) => void;
   onClose: () => void;
+  onIngredientCreated?: () => void;
 }
 
 const IngredientPopup: React.FC<IngredientPopupProps> = ({
   availableIngredients,
   onSelectIngredient,
   onClose,
+  onIngredientCreated,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -19,7 +21,7 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
     name: "",
     calories: 0,
     protein: 0,
-    carbs: 0,
+    carbohydrates: 0,
     fat: 0,
     serving_size: 1.0,
     serving_size_unit: "",
@@ -42,6 +44,7 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
     try {
       const createdIngredient = await createIngredient(newIngredient);
       onSelectIngredient(createdIngredient.id);
+      onIngredientCreated?.();
       onClose();
     } catch (error) {
       console.error("Failed to create ingredient", error);
@@ -131,7 +134,7 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
                     onChange={(e) =>
                       setNewIngredient({
                         ...newIngredient,
-                        calories: Number(e.target.value),
+                        calories: Math.round(Number(e.target.value)),
                       })
                     }
                     className="w-full p-2 border rounded"
@@ -149,12 +152,11 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
                     onChange={(e) =>
                       setNewIngredient({
                         ...newIngredient,
-                        protein: Number(e.target.value),
+                        protein: Math.round(Number(e.target.value)),
                       })
                     }
                     className="w-full p-2 border rounded"
                     min="0"
-                    step="0.1"
                     required
                   />
                 </div>
@@ -163,20 +165,19 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Carbs (g)
+                    Carbohydrates (g)
                   </label>
                   <input
                     type="number"
-                    value={newIngredient.carbs}
+                    value={newIngredient.carbohydrates}
                     onChange={(e) =>
                       setNewIngredient({
                         ...newIngredient,
-                        carbs: Number(e.target.value),
+                        carbohydrates: Math.round(Number(e.target.value)),
                       })
                     }
                     className="w-full p-2 border rounded"
                     min="0"
-                    step="0.1"
                     required
                   />
                 </div>
@@ -190,12 +191,11 @@ const IngredientPopup: React.FC<IngredientPopupProps> = ({
                     onChange={(e) =>
                       setNewIngredient({
                         ...newIngredient,
-                        fat: Number(e.target.value),
+                        fat: Math.round(Number(e.target.value)),
                       })
                     }
                     className="w-full p-2 border rounded"
                     min="0"
-                    step="0.1"
                     required
                   />
                 </div>

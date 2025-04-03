@@ -1,21 +1,38 @@
-export interface Ingredient {
-  id: number;
-  name: string;
-  note?: string;
+export interface Nutrition {
   calories: number;
   protein: number;
-  carbs: number;
+  carbohydrates: number;
   fat: number;
+}
+
+export interface Food {
+  id: number;
+  name: string;
   serving_size: number;
   serving_size_unit: string;
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
 }
 
 export interface RecipeIngredient {
   ingredient_id: number;
+  food: Food;
   amount: number;
   unit: string;
-  name: string;
   note?: string;
+}
+
+export interface CreateRecipeRequest extends Nutrition {
+  name: string;
+  ingredients: {
+    food_id: number;
+    note: string;
+    quantity: number;
+    unit: string;
+  }[];
+  override_nutrition: boolean;
 }
 
 export interface Recipe {
@@ -24,7 +41,7 @@ export interface Recipe {
   servings: number;
   calories_per_serving: number;
   protein_per_serving: number;
-  carbs_per_serving: number;
+  carbohydrates_per_serving: number;
   fat_per_serving: number;
   ingredients: RecipeIngredient[];
   instructions: string;

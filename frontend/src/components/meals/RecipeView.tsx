@@ -16,7 +16,7 @@ const RecipeView: React.FC<RecipeViewProps> = ({ recipe }) => {
           <div className="space-y-1">
             <div>Calories: {recipe.calories_per_serving}</div>
             <div>Protein: {recipe.protein_per_serving}g</div>
-            <div>Carbs: {recipe.carbs_per_serving}g</div>
+            <div>Carbohydrates: {recipe.carbohydrates_per_serving}g</div>
             <div>Fat: {recipe.fat_per_serving}g</div>
           </div>
         </div>
@@ -33,10 +33,10 @@ const RecipeView: React.FC<RecipeViewProps> = ({ recipe }) => {
         <h3 className="text-lg font-medium mb-2">Ingredients</h3>
         <div className="space-y-2">
           {recipe.ingredients.map((ingredient, index) => (
-            <div key={index} className="flex items-center space-x-2">
+            <div key={index} className="flex items-center gap-2">
               <span className="font-medium">{ingredient.amount}</span>
               <span>{ingredient.unit}</span>
-              <span>{ingredient.name}</span>
+              <span>{ingredient.food.name}</span>
               {ingredient.note && (
                 <span className="text-gray-500">({ingredient.note})</span>
               )}

@@ -19,14 +19,33 @@ from src.food.models import (
 router = APIRouter()
 
 
-@router.post("/food", response_model=FoodResponse)
+@router.get("/foods", response_model=List[FoodResponse])
+def get_foods(db_session: Session = Depends(get_db_session)) -> List[FoodResponse]:
+    """Get all foods."""
+    foods = service.get_foods(db_session=db_session)
+    return [
+        FoodResponse(
+            id=food.id,
+            name=food.name,
+            serving_size=food.serving_size,
+            serving_size_unit=food.serving_size_unit,
+            calories=food.calories,
+            fat=food.fat,
+            protein=food.protein,
+            carbohydrates=food.carbohydrates,
+        )
+        for food in foods
+    ]
+
+
+@router.post("/foods", response_model=FoodResponse)
 def create_food_route(
     request: CreateFoodRequest, db_session: Session = Depends(get_db_session)
 ) -> Optional[FoodResponse]:
     return service.create_food(db_session=db_session, request=request)
 
 
-@router.put("/food/{food_id}", response_model=FoodResponse)
+@router.put("/foods/{food_id}", response_model=FoodResponse)
 def update_food_route(
     food_id: int,
     request: UpdateFoodRequest,
@@ -52,14 +71,14 @@ def update_food_route(
     )
 
 
-@router.post("/recipe", response_model=RecipeResponse)
+@router.post("/recipes", response_model=RecipeResponse)
 def create_recipe(
     request: CreateRecipeRequest, db_session: Session = Depends(get_db_session)
 ) -> Optional[RecipeResponse]:
     return service.create_recipe(db_session=db_session, request=request)
 
 
-@router.put("/recipe/{recipe_id}", response_model=RecipeResponse)
+@router.put("/recipes/{recipe_id}", response_model=RecipeResponse)
 def update_recipe_route(
     recipe_id: int,
     request: UpdateRecipeRequest,
@@ -125,23 +144,4 @@ def get_recipes(db_session: Session = Depends(get_db_session)) -> List[RecipeRes
             carbohydrates=recipe.food.carbohydrates,
         )
         for recipe in recipes
-    ]
-
-
-@router.get("/foods", response_model=List[FoodResponse])
-def get_foods(db_session: Session = Depends(get_db_session)) -> List[FoodResponse]:
-    """Get all foods."""
-    foods = service.get_foods(db_session=db_session)
-    return [
-        FoodResponse(
-            id=food.id,
-            name=food.name,
-            serving_size=food.serving_size,
-            serving_size_unit=food.serving_size_unit,
-            calories=food.calories,
-            fat=food.fat,
-            protein=food.protein,
-            carbohydrates=food.carbohydrates,
-        )
-        for food in foods
     ]
